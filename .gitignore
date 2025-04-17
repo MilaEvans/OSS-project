@@ -1,8 +1,1 @@
-/Debug/
-/Release/
-*.user
-*.exe
-*.obj
-*.pdb
-*.log
-.vs/
+.
