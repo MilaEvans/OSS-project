@@ -6,7 +6,7 @@ using namespace std;
 int main()
 {
 	temp::menu();
-	std::string ss;
+	string ss;
 	getline(cin, ss);
 	
 	
