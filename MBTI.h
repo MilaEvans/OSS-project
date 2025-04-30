@@ -10,8 +10,8 @@ class User
 private:
 	std::vector<std::string> tags;
 public:
-	void addTag(const std::string& tag); // tag Ãß°¡ ÇÔ¼ö
-	const std::vector<std::string>& getTags() const; // »ç¿ëÀÚ ÅÂ±× ¹İÈ¯
+	void addTag(const std::string& tag); // tag ì¶”ê°€ í•¨ìˆ˜
+	const std::vector<std::string>& getTags() const; // ì‚¬ìš©ì íƒœê·¸ ë°˜í™˜
 	void askMBTI();
 	
 };

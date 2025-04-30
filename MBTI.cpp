@@ -16,17 +16,17 @@ const std::vector<std::string>& User::getTags() const
 
 void User::askMBTI()
 {
-	std::cout << "µ¿¾Æ¸® ÃßÃµ Ãªº¿¿¡ ¿À½Å °É È¯¿µÇÕ´Ï´Ù!\n\n";
-	std::cout << "MBTI¸¦ ÀÔ·ÂÇØÁÖ¼¼¿ä ¿¹(: INTJ, ENFP): ";
+	std::cout << "ë™ì•„ë¦¬ ì¶”ì²œ ì±—ë´‡ì— ì˜¤ì‹  ê±¸ í™˜ì˜í•©ë‹ˆë‹¤!\n\n";
+	std::cout << "MBTIë¥¼ ì…ë ¥í•´ì£¼ì„¸ìš” ì˜ˆ(: INTJ, ENFP): ";
 	std::string mbti;
 	std::cin >> mbti;
 
 	if (mbti == "ISTP" || mbti == "ESTP")
 	{
-		addTag("¸ğÇèÀûÀÎ");
+		addTag("ëª¨í—˜ì ì¸");
 	}
 	else
 	{
-		std::cout << "Àß¸øµÈ MBTI ÀÔ·ÂÀÔ´Ï´Ù. ´Ù½Ã ÀÔ·ÂÇØÁÖ¼¼¿ä.\n";
+		std::cout << "ì˜ëª»ëœ MBTI ì…ë ¥ì…ë‹ˆë‹¤. ë‹¤ì‹œ ì…ë ¥í•´ì£¼ì„¸ìš”.\n";
 	}
 }
