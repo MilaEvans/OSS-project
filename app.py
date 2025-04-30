@@ -11,9 +11,8 @@ def index():
 def chat():
     user_input = request.form['keyword']
 
-    # C++ 추천 로직 실행
     result = subprocess.run(
-        ['./()'],  # 윈도우면 './().exe'
+        ['./(이름)'],  # './(이름).exe'
         input=user_input,
         text=True,
         capture_output=True
