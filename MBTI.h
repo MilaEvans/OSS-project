@@ -1,16 +1,18 @@
 #ifndef MBTI_H
 #define MBTI_H
 
+#include <iostream>
+#include <string>
+#include <vector>
+
 class User
 {
 private:
 	std::vector<std::string> tags;
 public:
-	void addTag(const std::string& tag); // tag Ãß°¡ ÇÔ¼ö
-	const std::vector<std::string>& getTags() const; // »ç¿ëÀÚ ÅÂ±× ¹İÈ¯
-	void askMBTI()
-	{
-		std::cout << "µ¿¾Æ¸® ÃßÃµ Ãªº¿¿¡ ¿À½Å °É È¯¿µÇÕ´Ï´Ù!\n\n";
-	}
+	void addTag(const std::string& tag); // tag ì¶”ê°€ í•¨ìˆ˜
+	const std::vector<std::string>& getTags() const; // ì‚¬ìš©ì íƒœê·¸ ë°˜í™˜
+	void askMBTI();
+	
 };
 #endif
