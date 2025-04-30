@@ -3,33 +3,63 @@
 #include <map>
 #include <vector>
 
+bool isKeywordMatch(const std::string& qq, const std::string& tokenFirst, const std::string& tokenSecond, const std::string& keyword)
+{
+	if (qq.find(tokenFirst) != std::string::npos)
+	{
+		return tokenSecond == keyword;
+	}
+	return false;
+}
 int main()
 {
 	bool matched = false;
+	bool matched1 = false;
 
-	std::map<std::string, std::vector<std::string>> Keyword;
+	std::map<std::string, std::vector<std::string>> keyword;
+	std::map<std::string, std::string> danceKeyword;
 
-	Keyword["ì½”ë”©"] = { "ì•Œê³ ë¦¬ì¦˜ ë™ì•„ë¦¬", "ì•± ê°œë°œ ë™ì•„ë¦¬", "í•´ì»¤í†¤ ë™ì•„ë¦¬" };
+	keyword["ÄÚµù"] = { "¾Ë°í¸®Áò µ¿¾Æ¸®", "¾Û °³¹ß µ¿¾Æ¸®", "ÇØÄ¿Åæ µ¿¾Æ¸®" };
+	keyword["´í½º"] = { "K-POP´í½º µ¿¾Æ¸®, ½ºÆ®¸´ ´í½º µ¿¾Æ¸®, ¿ÎÅ· ´í½º µ¿¾Æ¸®" };
 
-	std::cout << "ì±—ë´‡: ì•„ë˜ì— ê´€ì‹¬ í‚¤ì›Œë“œë¥¼ ì…ë ¥í•´ë³´ì„¸ìš”!" << "\n";
-	std::cout << "1. MBTI  2. ê´€ì‹¬ ì£¼ì œ  3. ì·¨ë¯¸" << "\n\n";
+	danceKeyword["Ãã"] = "´í½º";
 
-	std::string ss; // string ì´ë¦„ ë³€ê²½
-	std::string qq; // string ì´ë¦„ ë³€ê²½
+	std::cout << "Ãªº¿: ¾Æ·¡¿¡ °ü½É Å°¿öµå¸¦ ÀÔ·ÂÇØº¸¼¼¿ä!" << "\n";
+	std::cout << "1. MBTI  2. °ü½É ÁÖÁ¦  3. Ãë¹Ì" << "\n\n";
+
+	std::string ss; // string ÀÌ¸§ º¯°æ
+	std::string qq; // string ÀÌ¸§ º¯°æ
 
 	std::getline(std::cin, ss);
-	if (ss == "ê´€ì‹¬ ì£¼ì œ" || ss == "ê´€ì‹¬ì£¼ì œ")
+	if (ss == "°ü½É ÁÖÁ¦" || ss == "°ü½ÉÁÖÁ¦")
 	{
-		std::cout << "ìš”ì¦˜ ê´€ì‹¬ ìˆëŠ” ì£¼ì œì— ëŒ€í•´ ììœ ë¡­ê²Œ ì…ë ¥í•´ì£¼ì„¸ìš”!" << "\n";
+		std::cout << "¿äÁò °ü½É ÀÖ´Â ÁÖÁ¦¿¡ ´ëÇØ ÀÚÀ¯·Ó°Ô ÀÔ·ÂÇØÁÖ¼¼¿ä!" << "\n";
 		std::getline(std::cin, qq);
 		std::cout << "\n";
 
-		for (const auto& token : Keyword)
+		for (const auto& token : keyword)
 		{
-			if (qq.find(token.first) != std::string::npos)
+			std::string keyword = token.first;
+
+			if (qq.find(keyword) != std::string::npos)
 			{
 				matched = true;
-				std::cout << "ì¶”ì²œ ë™ì•„ë¦¬: ";
+			}
+			else
+			{
+				for (const auto& token1 : danceKeyword)
+				{
+					if (isKeywordMatch(qq, token1.first, token1.second, keyword))
+					{
+						matched = true;
+						break;
+					}
+				}
+			}
+			if (matched)
+			{
+				matched1 = true;
+				std::cout << "ÃßÃµ µ¿¾Æ¸® (" << keyword << " °ü·Ã): ";
 				for (size_t i = 0; i < token.second.size(); i++)
 				{
 					std::cout << token.second[i];
@@ -39,68 +69,72 @@ int main()
 					}
 				}
 				std::cout << "\n";
-				break;
+				matched = false;
 			}
+		}
+		if (!matched1)
+		{
+			std::cout << "°ü·ÃµÈ ÃßÃµ µ¿¾Æ¸®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.\n";
 		}
 	}
 	//if (ss == "MBTI")
 	//{
-	//	std::cout << "ë‹¹ì‹ ì˜ MBTI ìœ í˜•ì„ ì…ë ¥í•´ì£¼ì„¸ìš”!" << "\n";
+	//	std::cout << "´ç½ÅÀÇ MBTI À¯ÇüÀ» ÀÔ·ÂÇØÁÖ¼¼¿ä!" << "\n";
 	//	std::getline(std::cin, qq);
-	//	std::cout << "ì…ë ¥í•œ MBTI: " << qq << " (qq string ë‚´ìš© í™•ì¸ ì¶œë ¥)" << "\n";
+	//	std::cout << "ÀÔ·ÂÇÑ MBTI: " << qq << " (qq string ³»¿ë È®ÀÎ Ãâ·Â)" << "\n";
 	//}
-	//else if (ss == "ê´€ì‹¬ ì£¼ì œ")
+	//else if (ss == "°ü½É ÁÖÁ¦")
 	//{
-	//	std::cout << "ìš”ì¦˜ ê´€ì‹¬ ìˆëŠ” ì£¼ì œì— ëŒ€í•´ ììœ ë¡­ê²Œ ì…ë ¥í•´ì£¼ì„¸ìš”!" << "\n";
+	//	std::cout << "¿äÁò °ü½É ÀÖ´Â ÁÖÁ¦¿¡ ´ëÇØ ÀÚÀ¯·Ó°Ô ÀÔ·ÂÇØÁÖ¼¼¿ä!" << "\n";
 	//	std::getline(std::cin, qq); std::cout << "\n";
 
-	//	if (qq.find("ì½”ë”©") != std::string::npos || qq.find("í”„ë¡œê·¸ë˜ë°") != std::string::npos)
+	//	if (qq.find("ÄÚµù") != std::string::npos || qq.find("ÇÁ·Î±×·¡¹Ö") != std::string::npos)
 	//	{
-	//		std::cout << "ì¶”ì²œ ë™ì•„ë¦¬: ì•Œê³ ë¦¬ì¦˜ ë™ì•„ë¦¬, ì•± ê°œë°œ ë™ì•„ë¦¬, í•´ì»¤í†¤ ë™ì•„ë¦¬" << "\n";
+	//		std::cout << "ÃßÃµ µ¿¾Æ¸®: ¾Ë°í¸®Áò µ¿¾Æ¸®, ¾Û °³¹ß µ¿¾Æ¸®, ÇØÄ¿Åæ µ¿¾Æ¸®" << "\n";
 	//		matched = true;
 
-	//		std::cout << "\në” ë‚˜ì€ ì¶”ì²œì„ ìœ„í•´ ì•„ë˜ ì§ˆë¬¸ì—ë„ ë‹µë³€í•´ì£¼ì„¸ìš”!\n";
+	//		std::cout << "\n´õ ³ªÀº ÃßÃµÀ» À§ÇØ ¾Æ·¡ Áú¹®¿¡µµ ´äº¯ÇØÁÖ¼¼¿ä!\n";
 
 	//		std::string timePref, modePref;
 
-	//		std::cout << "Q1. ì£¼ë¡œ í™œë™ ê°€ëŠ¥í•œ ì‹œê°„ëŒ€ëŠ” ì–¸ì œì¸ê°€ìš”? (ì˜ˆ: í‰ì¼ ì €ë…, ì£¼ë§ ë“±)\n";
+	//		std::cout << "Q1. ÁÖ·Î È°µ¿ °¡´ÉÇÑ ½Ã°£´ë´Â ¾ğÁ¦ÀÎ°¡¿ä? (¿¹: ÆòÀÏ Àú³á, ÁÖ¸» µî)\n";
 	//		std::getline(std::cin, timePref);
 
-	//		std::cout << "Q2. í™œë™ ë°©ì‹ì„ ì„ í˜¸í•˜ì‹ ë‹¤ë©´? (ì˜¨ë¼ì¸, ì˜¤í”„ë¼ì¸ ì¤‘ í•˜ë‚˜)\n";
+	//		std::cout << "Q2. È°µ¿ ¹æ½ÄÀ» ¼±È£ÇÏ½Å´Ù¸é? (¿Â¶óÀÎ, ¿ÀÇÁ¶óÀÎ Áß ÇÏ³ª)\n";
 	//		std::getline(std::cin, modePref);
 
-	//		std::cout << "\në‹¹ì‹ ì—ê²Œ ì˜ ë§ëŠ” ë™ì•„ë¦¬ë¥¼ ë¶„ì„ ì¤‘...\n";
+	//		std::cout << "\n´ç½Å¿¡°Ô Àß ¸Â´Â µ¿¾Æ¸®¸¦ ºĞ¼® Áß...\n";
 
-	//		if (timePref.find("ì €ë…") != std::string::npos && modePref.find("ì˜¨ë¼ì¸") != std::string::npos)
+	//		if (timePref.find("Àú³á") != std::string::npos && modePref.find("¿Â¶óÀÎ") != std::string::npos)
 	//		{
-	//			std::cout << "ì¶”ì²œ: í‰ì¼ ì €ë… ì˜¨ë¼ì¸ í•´ì»¤í†¤ ë™ì•„ë¦¬\n";
+	//			std::cout << "ÃßÃµ: ÆòÀÏ Àú³á ¿Â¶óÀÎ ÇØÄ¿Åæ µ¿¾Æ¸®\n";
 	//		}
-	//		else if (timePref.find("ì£¼ë§") != std::string::npos && modePref.find("ì˜¤í”„ë¼ì¸") != std::string::npos)
+	//		else if (timePref.find("ÁÖ¸»") != std::string::npos && modePref.find("¿ÀÇÁ¶óÀÎ") != std::string::npos)
 	//		{
-	//			std::cout << "ì¶”ì²œ: ì£¼ë§ ì˜¤í”„ë¼ì¸ ì½”ë”©ìŠ¤í„°ë”” ë™ì•„ë¦¬\n";
+	//			std::cout << "ÃßÃµ: ÁÖ¸» ¿ÀÇÁ¶óÀÎ ÄÚµù½ºÅÍµğ µ¿¾Æ¸®\n";
 	//		}
 	//		else
 	//		{
-	//			std::cout << "ì¶”ì²œ: ë‹¤ì–‘í•œ ì‹œê°„ëŒ€ì— í™œë™í•˜ëŠ” ìœ ì—°í•œ ê°œë°œ ë™ì•„ë¦¬\n";
+	//			std::cout << "ÃßÃµ: ´Ù¾çÇÑ ½Ã°£´ë¿¡ È°µ¿ÇÏ´Â À¯¿¬ÇÑ °³¹ß µ¿¾Æ¸®\n";
 	//		}
 	//	}
 
-	//	if (qq.find("ëŒ„ìŠ¤") != std::string::npos || qq.find("ì¶¤") != std::string::npos)
+	//	if (qq.find("´í½º") != std::string::npos || qq.find("Ãã") != std::string::npos)
 	//	{
-	//		std::cout << "ì¶”ì²œ ë™ì•„ë¦¬: ìŠ¤íŠ¸ë¦¿ëŒ„ìŠ¤ ë™ì•„ë¦¬, K-POP ëŒ„ìŠ¤ ë™ì•„ë¦¬" << "\n";
+	//		std::cout << "ÃßÃµ µ¿¾Æ¸®: ½ºÆ®¸´´í½º µ¿¾Æ¸®, K-POP ´í½º µ¿¾Æ¸®" << "\n";
 	//		matched = true;
 	//	}
-	//	if (qq.find("ì‚¬ì§„") != std::string::npos || qq.find("ì´¬ì˜") != std::string::npos)
+	//	if (qq.find("»çÁø") != std::string::npos || qq.find("ÃÔ¿µ") != std::string::npos)
 	//	{
-	//		std::cout << "ì¶”ì²œ ë™ì•„ë¦¬: ì°°ì¹µ, ëˆˆìœ¼ë¡œë§Œ ë‹´ê¸°ì—ëŠ” ì•„ì‰¬ì›Œ!" << "\n";
+	//		std::cout << "ÃßÃµ µ¿¾Æ¸®: ÂûÄ¬, ´«À¸·Î¸¸ ´ã±â¿¡´Â ¾Æ½¬¿ö!" << "\n";
 	//		matched = true;
 	//	}
 
 	//	if (!matched)
 	//	{
-	//		std::cout << "ì£„ì†¡í•´ìš”, í•´ë‹¹ ì£¼ì œì— ë§ëŠ” ë™ì•„ë¦¬ë¥¼ ì•„ì§ ì¤€ë¹„ ì¤‘ì´ì—ìš”!" << "\n";
+	//		std::cout << "ÁË¼ÛÇØ¿ä, ÇØ´ç ÁÖÁ¦¿¡ ¸Â´Â µ¿¾Æ¸®¸¦ ¾ÆÁ÷ ÁØºñ ÁßÀÌ¿¡¿ä!" << "\n";
 	//	}
 	//}
 
-	std::cout << ss << " (ss string í™•ì¸ ì¶œë ¥)";
+	std::cout << ss << " (ss string È®ÀÎ Ãâ·Â)";
 }
