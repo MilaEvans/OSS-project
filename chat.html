@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>동아리 추천 챗봇</title>
+  <title>충북대학교 동아리 추천 CHAT</title>
   <style>
     body {
       font-family: sans-serif;
@@ -13,10 +13,62 @@
       height: 100vh;
     }
 
-    .chat-area {
+.chat-area {
       flex: 1;
       padding: 20px;
       overflow-y: auto;
     }
 
+    .chat-box {
+      border-top: 1px solid #ccc;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
 
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    input[type="submit"] {
+      width: 18%;
+      padding: 10px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+
+    .message {
+      margin-bottom: 10px;
+    }
+
+    .user {
+      text-align: right;
+      color: rgb(0, 102, 255);
+    }
+
+    .bot {
+      text-align: left;
+      color: rgb(0, 128, 21);
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-area">
+    <h2>동아리 추천 챗봇</h2>
+
+    {% if user_input %} //처음 챗봇이 물어보는 질문
+      <div class="message user"><strong>당신:</strong> {{ user_input }}</div> //유저가 처음 입력하는 "키워드"
+      <div class="message bot"><strong>챗봇:</strong> {{ bot_response }}</div> //키워드를 받고 반응하는 답변
+    {% else %}
+      <p>아래에 새로운 키워드를 입력해보세요!</p> //아래 계속 수정예정 
+    {% endif %}
+  </div>
