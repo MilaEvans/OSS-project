@@ -1,0 +1,21 @@
+#ifndef MBTI_H
+#define MBTI_H
+
+#include <string>
+#include <vector>
+#include <memory>
+
+class User {
+private:
+    std::vector<std::string> tags;
+    std::string mbti;
+
+public:
+    void addTag(const std::string& tag);
+    const std::vector<std::string>& getTags() const;
+
+    void askMBTI();
+    std::string getMBTI() const { return mbti; }
+};
+
+#endif
