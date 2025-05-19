@@ -13,7 +13,7 @@
       height: 100vh;
     }
 
-.chat-area {
+    .chat-area {
       flex: 1;
       padding: 20px;
       overflow-y: auto;
@@ -65,10 +65,17 @@
   <div class="chat-area">
     <h2>동아리 추천 챗봇</h2>
 
-    {% if user_input %} //처음 챗봇이 물어보는 질문
-      <div class="message user"><strong>당신:</strong> {{ user_input }}</div> //유저가 처음 입력하는 "키워드"
-      <div class="message bot"><strong>챗봇:</strong> {{ bot_response }}</div> //키워드를 받고 반응하는 답변
+    {% if user_input %}
+      <div class="message user"><strong>당신:</strong> {{ user_input }}</div>
+      <div class="message bot"><strong>챗봇:</strong> {{ bot_response }}</div>
     {% else %}
-      <p>아래에 새로운 키워드를 입력해보세요!</p> //아래 계속 수정예정 
+      <p>아래에 새로운 키워드를 입력해보세요!</p>
     {% endif %}
   </div>
+
+  <form class="chat-box" method="post" action="/chat">
+    <input type="text" name="keyword" placeholder="키워드를 입력하세요" required>
+    <input type="submit" value="전송">
+  </form>
+</body>
+</html>
