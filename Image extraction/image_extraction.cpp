@@ -1,8 +1,20 @@
 #include <iostream>
-#include <fstream> 
+#include <fstream>
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <cctype>
+
+// clean ÇÔ¼ö Á¤ÀÇ: °ø¹é Á¦°Å + ¼Ò¹®ÀÚ º¯È¯
+std::string clean(const std::string& str) {
+    std::string result;
+    for (char c : str) {
+        if (!isspace(c)) {
+            result += std::tolower(c);
+        }
+    }
+    return result;
+}
 
 int main(int argc, char* argv[])
 {
@@ -18,17 +30,17 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-        std::string input((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+    std::string input((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
     infile.close();
 
-    input = clean(input); // ì…ë ¥ ë¬¸ìì—´ ê³µë°± ì œê±°
+    input = clean(input); // ÀÔ·Â ¹®ÀÚ¿­ °ø¹é Á¦°Å
 
     std::vector<std::pair<std::string, std::string>> clubs = {
-        {"ì½”ë”©", "ì½”ë”©!!!!"},
-        {"Robot Club", "ììœ¨ì£¼í–‰ ë¡œë´‡ ê°œë°œ"},
-        {"AI Club", "ììœ¨ì£¼í–‰ ì¸ê³µì§€ëŠ¥ ì•Œê³ ë¦¬ì¦˜ ì—°êµ¬"},
-        {"Electric Vehicle Club", "ì „ê¸°ì°¨ ë° ììœ¨ì£¼í–‰ì°¨ ì—°êµ¬"},
-        {"Computer Vision Club", "ì»´í“¨í„° ë¹„ì „ê³¼ ì˜ìƒ ì²˜ë¦¬ ì—°êµ¬"}
+        {"ÄÚµù", "ÄÚµù!!!!"},
+        {"Robot Club", "ÀÚÀ²ÁÖÇà ·Îº¿ °³¹ß"},
+        {"AI Club", "ÀÚÀ²ÁÖÇà ÀÎ°øÁö´É ¾Ë°í¸®Áò ¿¬±¸"},
+        {"Electric Vehicle Club", "Àü±âÂ÷ ¹× ÀÚÀ²ÁÖÇàÂ÷ ¿¬±¸"},
+        {"Computer Vision Club", "ÄÄÇ»ÅÍ ºñÀü°ú ¿µ»ó Ã³¸® ¿¬±¸"}
     };
 
     std::vector<std::string> matches;
@@ -55,4 +67,3 @@ int main(int argc, char* argv[])
 }
 
 
-}
