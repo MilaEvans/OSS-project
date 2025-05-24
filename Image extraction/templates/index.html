@@ -1,13 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+    <meta charset="UTF-8">
     <title>동아리 추천</title>
+    <!-- Pretendard 폰트 적용 -->
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Pretendard', sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f0f4ff, #e2eafc);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: #ffffff;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+    </style>
 </head>
 <body>
-    <h1>동아리 포스터 사진 업로드</h1>
-    <form method="post" enctype="multipart/form-data">
-        <input type="file" name="poster" accept="image/*" required>
-        <button type="submit">추천받기</button>
-    </form>
+    <div class="container">
+        <h1>동아리 포스터 사진 업로드</h1>
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="poster" accept="image/*" required>
+            <button type="submit">추천받기</button>
+        </form>
+    </div>
 </body>
 </html>
