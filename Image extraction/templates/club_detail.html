@@ -4,12 +4,50 @@
     <meta charset="UTF-8">
     <title>{{ club_name }} 상세 정보</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .club-card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 2rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .btn-primary {
+            margin-top: 1.5rem;
+        }
+        .club-section {
+            text-align: left;
+            margin-top: 1.5rem;
+        }
+        .club-section h4 {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .club-section p {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-5">
-    <h1>{{ club_name }}</h1>
-    <p>{{ description }}</p>
-    <a href="/" class="btn btn-primary">홈으로 돌아가기</a>
+    <div class="club-card">
+        <h1 class="text-center mb-4">{{ club_name }}</h1>
+        <p class="lead text-center">{{ description }}</p>
+        
+        <div class="club-section">
+            <h4>동아리 소개</h4>
+            <p>이 동아리는 컴퓨터 프로그래밍에 관심 있는 학생들이 모여 함께 공부하고 프로젝트를 진행하는 모임입니다.</p>
+        </div>
+        
+        <div class="text-center">
+            <a href="/" class="btn btn-primary">🏠 홈으로 돌아가기</a>
+        </div>
+    </div>
 </div>
 </body>
 </html>
