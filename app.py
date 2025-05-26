@@ -1,36 +1,34 @@
-
 from flask import Flask, request, render_template
 import subprocess
-import os
 
 app = Flask(__name__)
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def index():
     return render_template("chat.html")
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    user_input = request.form["keyword"]
-    image_path = "/static/default.jpg"
-    
-    if "운동" in user_input:
-        bot_response = "운동 관련 추천 동아리는 '체육회', '풋살 동아리' 등이 있어요! ⚽"
-        image_path = "/static/default.jpg"
-    elif "사진" in user_input or "이미지" in user_input:
-        bot_response = "당신은 예술적인 감성이 뛰어나군요! 사진 동아리를 추천합니다. 📸"
-        image_path = "/static/default.jpg"
-    else:
-        try:
+    user_input = request.form.get("keyword", "").strip()
+    bot_response = ""
+    image_path = None
+
+    try:
+        if user_input and "mbti" in user_input.lower():
             result = subprocess.run(
                 ['./mbti_project/MixedMbti.exe'],
                 input=user_input,
                 text=True,
-                capture_output=True
+                capture_output=True,
+                encoding='cp949'
             )
-            bot_response = result.stdout.strip() or "추천 결과가 없습니다."
-        except Exception as e:
-            bot_response = f"추천 처리 중 오류 발생: {str(e)}"
+            bot_response = result.stdout.strip()
+            image_path = "/static/sports.jpg"
+        else:
+            bot_response = "지원하는 키워드는 'mbti'입니다."
+
+    except Exception as e:
+        bot_response = f"오류 발생: {str(e)}"
 
     return render_template("chat.html", user_input=user_input, bot_response=bot_response, image_path=image_path)
 
