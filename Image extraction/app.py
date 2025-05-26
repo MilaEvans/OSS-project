@@ -1,42 +1,87 @@
 import os
 import subprocess
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory
 from PIL import Image
 import pytesseract
+import datetime
+from markupsafe import Markup
 
 app = Flask(__name__)
+
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Tesseract 경로 (환경에 맞게 수정)
+@app.template_filter('nl2br')
+def nl2br_filter(s):
+    if s is None:
+        return ''
+    return Markup(s.replace('\n', '<br>\n'))
+
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-# 동아리 정보
 clubs_info = {
-    "COSMIC": "컴퓨터공학과 동아리",
-    "CaTs": "컴퓨터공학과 동아리",
-    "CERT": "컴퓨터공학과 동아리",
+    "COSMIC": {
+        "description": "컴퓨터공학과 동아리",
+        "introduction": "COSMIC은 ",
+        "schedule": [
+            "5-7 매주 수요일 오후 6시 ~ 8시",
+        ],
+        "category": "프로그래밍",
+        "members": 30
+    },
+    "CaTs": {
+        "description": "컴퓨터공학과 동아리",
+        "introduction": "CaTs는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "게임 개발",
+        "members": 20
+    },
+    "CERT": {
+        "description": "컴퓨터공학과 동아리",
+        "introduction": "CERT는 ",
+        "schedule": [
+            "5-9 매주 금요일 오후 5시 ~ 7시",
+        ],
+        "category": "보안",
+        "members": 15
+    }
 }
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    categories = sorted(set(c['category'] for c in clubs_info.values()))
+    selected_category = request.args.get('category', '전체')
+
+    if selected_category == '전체':
+        filtered_clubs = clubs_info
+    else:
+        filtered_clubs = {k:v for k,v in clubs_info.items() if v['category'] == selected_category}
+
     if request.method == 'POST':
         file = request.files.get('poster')
-        if not file:
+        if not file or file.filename == '':
             return "No file uploaded", 400
 
-        filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+        filename = file.filename
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
         file.save(filepath)
 
-        # OCR로 텍스트 추출
         ocr_text = pytesseract.image_to_string(Image.open(filepath), lang='kor+eng')
 
-        # OCR 텍스트 저장
+        if len(ocr_text.strip()) < 10:
+            os.remove(filepath)
+            return "포스터 이미지에서 텍스트를 인식하지 못했습니다.", 400
+
         textfile_path = os.path.join(UPLOAD_FOLDER, 'ocr_input.txt')
         with open(textfile_path, 'w', encoding='cp949') as f:
             f.write(ocr_text)
 
-        # C++ 실행
         cpp_exe_path = r'C:\mytest\doseong\recommender1.exe'
         try:
             proc = subprocess.Popen(
@@ -56,11 +101,8 @@ def index():
         except Exception as e:
             output = f"Error running C++ program: {str(e)}"
 
-        # 임시 파일 삭제
-        os.remove(filepath)
         os.remove(textfile_path)
 
-        # 결과 파싱
         recommended_clubs = []
         for line in output.strip().split('\n'):
             if ':' in line:
@@ -68,29 +110,48 @@ def index():
                 name = name.strip()
                 if name in clubs_info:
                     icon_map = {
-                        "코딩": "laptop-code",
-                        "Robot Club": "robot",
-                        "AI Club": "cpu",
-                        "Electric Vehicle Club": "battery-half",
-                        "Computer Vision Club": "camera-video"
+                        "COSMIC": "laptop-code",
+                        "CaTs": "gamepad",
+                        "CERT": "shield-alt"
                     }
                     recommended_clubs.append({
                         "name": name,
-                        "description": clubs_info[name],
+                        "description": clubs_info[name]["description"],
                         "icon": icon_map.get(name, "star"),
                         "tags": ["추천"]
                     })
 
         return render_template('result.html',
                                ocr_text=ocr_text,
-                               recommended_clubs=recommended_clubs)
+                               recommended_clubs=recommended_clubs,
+                               uploaded_filename=filename)
 
-    return render_template('index.html')
+    return render_template('index.html',
+                           clubs=filtered_clubs,
+                           categories=categories,
+                           selected_category=selected_category)
 
 @app.route('/club/<club_name>')
 def club_detail(club_name):
-    desc = clubs_info.get(club_name, "정보가 없습니다.")
-    return render_template('club_detail.html', club_name=club_name, description=desc)
+    club = clubs_info.get(club_name)
+    if not club:
+        return render_template('club_detail.html',
+                               club_name=club_name,
+                               description="정보가 없습니다.",
+                               introduction="소개 정보가 없습니다.",
+                               schedule=[],
+                               members=0,
+                               category="",
+                               datetime=datetime)
+
+    return render_template('club_detail.html',
+                           club_name=club_name,
+                           description=club["description"],
+                           introduction=club["introduction"],
+                           schedule=club.get("schedule", []),
+                           members=club.get("members", 0),
+                           category=club.get("category", ""),
+                           datetime=datetime)
 
 if __name__ == '__main__':
     app.run(debug=True)
