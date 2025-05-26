@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -23,23 +24,23 @@
       border-top: 1px solid #ccc;
       padding: 10px;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    input[type="text"] {
-      width: 80%;
+    input[type="text"], input[type="file"] {
       padding: 10px;
       font-size: 16px;
     }
 
     input[type="submit"] {
-      width: 18%;
       padding: 10px;
       font-size: 16px;
       background-color: #007bff;
       color: white;
       border: none;
       cursor: pointer;
+      width: 100%;
     }
 
     input[type="submit"]:hover {
@@ -59,6 +60,11 @@
       text-align: left;
       color: rgb(0, 128, 21);
     }
+
+    img {
+      max-width: 300px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -67,14 +73,18 @@
 
     {% if user_input %}
       <div class="message user"><strong>당신:</strong> {{ user_input }}</div>
+    {% endif %}
+    {% if bot_response %}
       <div class="message bot"><strong>챗봇:</strong> {{ bot_response }}</div>
-    {% else %}
-      <p>아래에 새로운 키워드를 입력해보세요!</p>
+    {% endif %}
+    {% if image_path %}
+      <img src="{{ image_path }}" alt="추천 이미지">
     {% endif %}
   </div>
 
-  <form class="chat-box" method="post" action="/chat">
-    <input type="text" name="keyword" placeholder="키워드를 입력하세요" required>
+  <form class="chat-box" method="post" action="/chat" enctype="multipart/form-data">
+    <input type="text" name="keyword" placeholder="키워드를 입력하거나 이미지를 업로드하세요">
+    <input type="file" name="image">
     <input type="submit" value="전송">
   </form>
 </body>
