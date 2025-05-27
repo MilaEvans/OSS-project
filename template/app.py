@@ -1,19 +1,24 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, session
 import subprocess
 import os
 from werkzeug.utils import secure_filename
-from deepface_club_recommender import recommend_club_by_face
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'template'))
+app.secret_key = 'very_secret_key'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("chat.html")
-    
+    if "history" not in session:
+        session["history"] = []
+    return render_template("chat.html", history=session["history"])
+
 @app.route("/chat", methods=["POST"])
 def chat():
+    if "history" not in session:
+        session["history"] = []
+
     user_input = request.form.get("keyword", "").strip()
     uploaded_file = request.files.get("image")
     image_path = None
@@ -25,8 +30,9 @@ def chat():
             saved_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             uploaded_file.save(saved_path)
 
-            bot_response = recommend_club_by_face(saved_path)
+            bot_response = f"이미지 '{filename}'이 업로드되었습니다. (분석 기능 없음)"
             image_path = f"/static/uploads/{filename}"
+
 
         elif user_input:
             if "mbti" in user_input.lower():
@@ -40,7 +46,6 @@ def chat():
                 bot_response = result.stdout.strip()
                 image_path = "/static/sports.jpg"
 
-            #아래부분은 현재 MBTI외의 기능이 없기 때문에 일시적으로 MBTI외의 반응을 보기위해 추가해놓은 것임
             elif "운동" in user_input:
                 bot_response = "운동 관련 추천: 체대 동아리, 풋살 동아리"
                 image_path = "/static/sports.jpg"
@@ -57,7 +62,12 @@ def chat():
     except Exception as e:
         bot_response = f"오류 발생: {str(e)}"
 
-    return render_template("chat.html", user_input=user_input, bot_response=bot_response, image_path=image_path)
+    if user_input:
+        session["history"].append(("user", user_input))
+    session["history"].append(("bot", bot_response))
+    session.modified = True
+
+    return render_template("chat.html", history=session["history"], image_path=image_path)
 
 if __name__ == "__main__":
     app.run(debug=True)
