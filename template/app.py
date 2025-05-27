@@ -2,13 +2,14 @@ from flask import Flask, request, render_template
 import subprocess
 import os
 from werkzeug.utils import secure_filename
+from deepface_club_recommender import recommend_club_by_face
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @app.route("/", methods=["GET"])
-def index():
+def legacy_chat():
     return render_template("chat.html")
 
 @app.route("/chat", methods=["POST"])
@@ -20,13 +21,11 @@ def chat():
 
     try:
         if uploaded_file and uploaded_file.filename != "":
-            # 이미지 업로드 처리
             filename = secure_filename(uploaded_file.filename)
             saved_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             uploaded_file.save(saved_path)
 
-            # 분석 로직: 추후 DeepFace 또는 C++ 연동 가능
-            bot_response = f"이미지 '{filename}'을 업로드했습니다. (분석 결과를 여기에 표시할 수 있습니다)"
+            bot_response = recommend_club_by_face(saved_path)
             image_path = f"/static/uploads/{filename}"
 
         elif user_input:
@@ -41,19 +40,17 @@ def chat():
                 bot_response = result.stdout.strip()
                 image_path = "/static/sports.jpg"
 
-            elif "사진" in user_input or "이미지" in user_input:
-                result = subprocess.run(
-                    ['./Image extraction/image_extraction.exe'],
-                    input=user_input,
-                    text=True,
-                    capture_output=True,
-                    encoding='cp949'
-                )
-                bot_response = result.stdout.strip()
+            #아래부분은 현재 MBTI외의 기능이 없기 때문에 일시적으로 MBTI외의 반응을 보기위해 추가해놓은 것임
+            elif "운동" in user_input:
+                bot_response = "운동 관련 추천: 체대 동아리, 풋살 동아리"
+                image_path = "/static/sports.jpg"
+
+            elif "사진" in user_input:
+                bot_response = "예술 감성 추천: 사진 동아리, 그림 동아리"
                 image_path = "/static/photo.jpg"
 
             else:
-                bot_response = "지원하지 않는 키워드입니다. 'mbti' 또는 '사진'을 포함해주세요."
+                bot_response = "지원되지 않는 키워드입니다. 예: mbti, 운동, 사진"
         else:
             bot_response = "텍스트 또는 이미지를 입력해주세요."
 
