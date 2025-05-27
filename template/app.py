@@ -9,9 +9,9 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @app.route("/", methods=["GET"])
-def legacy_chat():
+def index():
     return render_template("chat.html")
-
+    
 @app.route("/chat", methods=["POST"])
 def chat():
     user_input = request.form.get("keyword", "").strip()
