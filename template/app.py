@@ -8,6 +8,13 @@ app.secret_key = 'very_secret_key'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+VALID_MBTI = {
+    "INTJ", "INTP", "ENTJ", "ENTP",
+    "INFJ", "INFP", "ENFJ", "ENFP",
+    "ISTJ", "ISFJ", "ESTJ", "ESFJ",
+    "ISTP", "ISFP", "ESTP", "ESFP"
+}
+
 @app.route("/", methods=["GET"])
 def index():
     if "history" not in session:
@@ -29,21 +36,26 @@ def chat():
             filename = secure_filename(uploaded_file.filename)
             saved_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             uploaded_file.save(saved_path)
-
             bot_response = f"이미지 '{filename}'이 업로드되었습니다. (분석 기능 없음)"
             image_path = f"/static/uploads/{filename}"
 
-
         elif user_input:
-            if "mbti" in user_input.lower():
+            upper_input = user_input.upper()
+
+            if upper_input in VALID_MBTI:
+                exe_path = os.path.join(os.path.dirname(__file__), 'mbti_project', 'MixedMbti.exe')
                 result = subprocess.run(
-                    ['./mbti_project/MixedMbti.exe'],
-                    input=user_input,
+                    [exe_path, upper_input],
                     text=True,
                     capture_output=True,
-                    encoding='cp949'
+                    encoding='utf-8',  
+                    errors='replace'
                 )
-                bot_response = result.stdout.strip()
+
+                if result.returncode != 0:
+                    bot_response = f"[실패] 오류 발생: {result.stderr.strip() if result.stderr else '실패 원인 불명'}"
+                else:
+                    bot_response = result.stdout.strip() if result.stdout else "[경고] 출력 없음"
                 image_path = "/static/sports.jpg"
 
             elif "운동" in user_input:
@@ -55,7 +67,7 @@ def chat():
                 image_path = "/static/photo.jpg"
 
             else:
-                bot_response = "지원되지 않는 키워드입니다. 예: mbti, 운동, 사진"
+                bot_response = "지원되지 않는 키워드입니다. 예: intj, 운동, 사진"
         else:
             bot_response = "텍스트 또는 이미지를 입력해주세요."
 
@@ -69,5 +81,11 @@ def chat():
 
     return render_template("chat.html", history=session["history"], image_path=image_path)
 
+@app.route("/clear", methods=["POST"])
+def clear():
+    session.pop("history", None)
+    return render_template("chat.html", history=[])
+
 if __name__ == "__main__":
+    print("✅ Flask 서버 시작 중... http://127.0.0.1:5000")
     app.run(debug=True)
