@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>동아리 챗봇</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 20px auto; }
+    #chatWindow { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; background: #f9f9f9; }
+    #chatWindow p { margin: 5px 0; }
+    .user { color: blue; }
+    .bot { color: green; }
+  </style>
+</head>
+<body>
+  <h1>동아리 추천 챗봇</h1>
+  <div id="chatWindow"></div>
+  <form id="chatForm">
+    <input type="text" name="user_input" placeholder="메시지를 입력하세요" required style="width: 70%;">
+    <button type="submit">보내기</button>
+  </form>
+
+  <script>
+    const chatWindow = document.getElementById("chatWindow");
+    document.getElementById("chatForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      const userText = form.get("user_input");
+      chatWindow.innerHTML += `<p class="user"> You: ${userText}</p>`;
+
+      const res = await fetch("/chat", {
+        method: "POST",
+        body: form
+      });
+
+      const data = await res.json();
+      chatWindow.innerHTML += `<p class="bot"> Bot: ${data.response}</p>`;
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      e.target.reset();
+    };
+  </script>
+</body>
+</html>
