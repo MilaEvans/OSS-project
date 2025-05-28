@@ -36,6 +36,20 @@ void loadSimilarWords(const std::string& filename, std::map<std::string, std::st
 	file.close();
 }
 
+void printRecommendedClubs(const std::string& key, const std::vector<std::string>& clubs)
+{
+	std::cout << "추천 동아리 (" << key << " 관련): ";
+	for (size_t i = 0; i < clubs.size(); ++i)
+	{
+		std::cout << clubs[i];
+		if (i != clubs.size() - 1)
+		{
+			std::cout << ", ";
+		}
+	}
+	std::cout << "\n";
+}
+
 int main()
 {
 	bool isCurrentMatched = false; // 기존 Matched
@@ -84,16 +98,7 @@ int main()
 			if (isCurrentMatched)
 			{
 				anyMatchFound = true;
-				std::cout << "추천 동아리 (" << key << " 관련): ";
-				for (size_t i = 0; i < token.second.size(); i++)
-				{
-					std::cout << token.second[i];
-					if (i != token.second.size() - 1)
-					{
-						std::cout << ", ";
-					}
-				}
-				std::cout << "\n";
+				printRecommendedClubs(key, token.second);
 				isCurrentMatched = false;
 			}
 		}
