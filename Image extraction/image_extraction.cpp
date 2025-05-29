@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cctype>
 
-// clean ÇÔ¼ö: °ø¹é Á¦°Å + ¼Ò¹®ÀÚ º¯È¯
 std::string clean(const std::string& str) {
     std::string result;
     for (char c : str) {
@@ -35,19 +34,14 @@ int main(int argc, char* argv[])
 
     input = clean(input);
 
-    // °¢ µ¿¾Æ¸®¸¶´Ù ¿©·¯ °³ÀÇ Å°¿öµå(°ü·Ã ´Ü¾î) µî·Ï
     struct Club {
-        std::string name;
+        std::vector<std::string> names;
         std::string description;
         std::vector<std::string> keywords;
     };
 
     std::vector<Club> clubs = {
-        {"ÄÚµù", "ÄÚµù!!!!", {"ÄÚµù", "ÇÁ·Î±×·¡¹Ö", "html", "css", "javascript", "python", "À¥"}},
-        {"Robot Club", "ÀÚÀ²ÁÖÇà ·Îº¿ °³¹ß", {"·Îº¿", "ÀÚÀ²ÁÖÇà", "ÀÚµ¿Â÷", "±â°è"}},
-        {"AI Club", "ÀÚÀ²ÁÖÇà ÀÎ°øÁö´É ¾Ë°í¸®Áò ¿¬±¸", {"ÀÎ°øÁö´É", "ai", "¸Ó½Å·¯´×", "µö·¯´×", "¾Ë°í¸®Áò"}},
-        {"Electric Vehicle Club", "Àü±âÂ÷ ¹× ÀÚÀ²ÁÖÇàÂ÷ ¿¬±¸", {"Àü±âÂ÷", "Àü±â", "¹èÅÍ¸®", "ÀÚÀ²ÁÖÇà"}},
-        {"Computer Vision Club", "ÄÄÇ»ÅÍ ºñÀü°ú ¿µ»ó Ã³¸® ¿¬±¸", {"ÄÄÇ»ÅÍºñÀü", "¿µ»óÃ³¸®", "opencv", "ÀÌ¹ÌÁö", "¿µ»ó"}}
+        {{"COSMIC", "CaTs", "CERT"}, "ì»´í“¨í„°ê³µí•™ê³¼ ë™ì•„ë¦¬", {"ì½”ë”©", "í”„ë¡œê·¸ë˜ë°", "html", "css", "javascript", "python", "ì›¹"}},
     };
 
     std::vector<std::string> matches;
@@ -55,8 +49,10 @@ int main(int argc, char* argv[])
     for (const auto& club : clubs) {
         for (const auto& kw : club.keywords) {
             if (input.find(clean(kw)) != std::string::npos) {
-                matches.push_back(club.name + ": " + club.description);
-                break;  // Å°¿öµå ÇÏ³ª¶óµµ ¸ÅÄªµÇ¸é ÇØ´ç µ¿¾Æ¸® Ãß°¡ÇÏ°í ´ÙÀ½ µ¿¾Æ¸® °Ë»ç
+                for (const auto& name : club.names) {
+                    matches.push_back(name + ": " + club.description); // ëª¨ë“  ì´ë¦„ ì¶œë ¥
+                }
+                break; // ì¤‘ë³µ ë°©ì§€ë¥¼ ìœ„í•´ ë‹¤ìŒ í´ëŸ½ìœ¼ë¡œ
             }
         }
     }
