@@ -12,6 +12,25 @@ std::map<std::string, int> wordFrequency;
 // 인기 동아리 추천 횟수 저장용
 std::map<std::string, int> clubRecommendCount;
 
+
+// 예산/비용 관련 동아리 추천
+void recommendClubsByBudget(const std::string& userInput, const std::vector<std::string>& budgetClubs) {
+	std::string lowered = userInput;
+	std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
+
+	if (lowered.find("예산") != std::string::npos || lowered.find("비용") != std::string::npos ||
+		lowered.find("싸다") != std::string::npos || lowered.find("무료") != std::string::npos ||
+		lowered.find("비싸다") != std::string::npos)
+	{
+		std::cout << "\n예산을 고려해 가입할 수 있는 저렴한 동아리는 다음과 같아요:\n";
+		for (const auto& club : budgetClubs) {
+			std::cout << "- " << club << "\n";
+			clubRecommendCount[club]++;
+		}
+		std::cout << "\n";
+	}
+}
+
 // 사용자 입력에서 단어 추출 및 빈도 증가 함수
 void analyzeUserInput(const std::string& input) {
 	std::istringstream iss(input);
@@ -255,6 +274,8 @@ int main()
 	"늘해랑"      // 응원단
 	};
 
+	std::vector<std::string> budgetClubs = { "CaTs", "NAWoo", "COSMIC", "Online Club" }; // 예산 고려 동아리
+
 
 	// 유사어 파일 로드
 	loadSimilarWords("C:\\Users\\pring\\Desktop\\similar_words.txt", similarWords); // 유사어 파일 로드
@@ -269,6 +290,8 @@ int main()
 			std::string userInput = getUserInput("요즘 관심 있는 주제에 대해 자유롭게 입력해주세요!\n\n");
 			if (userInput == "exit") break;
 
+			// 1. 비용 고려
+			recommendClubsByBudget(userInput, budgetClubs);
 			// 2. 저녁 시간대 동아리 질문 확인 및 추천
 			checkEveningActivity(userInput, eveningClubs);
 
