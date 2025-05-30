@@ -245,6 +245,23 @@ void checkEveningActivity(const std::string& userInput, const std::vector<std::s
 	}
 }
 
+// 요일 기반 동아리 추천
+void recommendClubsByDay(const std::string& userInput, const std::map<std::string, std::vector<std::string>>& dayClubs) {
+	// 한글 요일 리스트
+	std::vector<std::string> days = { "월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일" };
+
+	for (const auto& day : days) {
+		if (userInput.find(day) != std::string::npos) {
+			std::cout << "\n" << day << "에 활동하는 동아리는 다음과 같아요:\n";
+			for (const auto& club : dayClubs.at(day)) {
+				std::cout << "- " << club << "\n";
+				clubRecommendCount[club]++;
+			}
+			std::cout << "\n";
+			return;
+		}
+	}
+}
 
 
 int main()
@@ -276,20 +293,30 @@ int main()
 
 	std::vector<std::string> budgetClubs = { "CaTs", "NAWoo", "COSMIC", "Online Club" }; // 예산 고려 동아리
 
+	// 요일별 동아리 리스트
+	std::map<std::string, std::vector<std::string>> dayClubs = {
+		{"월요일", {"COSMIC", "H.I.T"}},
+		{"화요일", {"SIVA CREW", "Online Club"}},
+		{"수요일", {"AMUSEMENT", "CaTs"}},
+		{"목요일", {"NAWoo", "늘해랑"}},
+		{"금요일", {"BBP", "setup"}},
+		{"토요일", {"EDGE", "SPLIT"}},
+		{"일요일", {"북두칠성", "다마스"}}
+	};
 
 	// 유사어 파일 로드
 	loadSimilarWords("C:\\Users\\pring\\Desktop\\similar_words.txt", similarWords); // 유사어 파일 로드
 
 	// 사용자 입력
-	std::string categoryInput = getUserInput("챗봇: 아래에 관심 키워드를 입력해보세요!\n1. MBTI  2. 관심 주제\n\n");
-
-	if (categoryInput == "관심 주제" || categoryInput == "관심주제")
+	std::cout << "동아리 추천 챗봇에 오신 것을 환영합니다! 종료하려면 'exit'을 입력하세요.\n\n";
 	{
 		while (true)
 		{
 			std::string userInput = getUserInput("요즘 관심 있는 주제에 대해 자유롭게 입력해주세요!\n\n");
-			if (userInput == "exit") break;
 
+			if (userInput == "exit") break;
+			// 0. 요일 기반 
+			recommendClubsByDay(userInput, dayClubs);              
 			// 1. 비용 고려
 			recommendClubsByBudget(userInput, budgetClubs);
 			// 2. 저녁 시간대 동아리 질문 확인 및 추천
@@ -302,15 +329,11 @@ int main()
 			processInterestInput(userInput, keyword, similarWords); // 관심 키워드 처리 함수 호출
 
 			// 5. 잠재 키워드 후보 출력 (빈도 2 이상 단어)
+
 			printCandidateKeywords(2);
 
 			std::cout << "\n---------------------\n";
 		}
-	}
-
-	else
-	{
-		std::cout << "현재 지원하지 않는 카테고리입니다.\n";
 	}
 
 
