@@ -6,8 +6,79 @@
 #include <sstream>
 #include <algorithm>
 
+// 단어 빈도 저장용
+std::map<std::string, int> wordFrequency;
 
+// 인기 동아리 추천 횟수 저장용
 std::map<std::string, int> clubRecommendCount;
+
+// 사용자 입력에서 단어 추출 및 빈도 증가 함수
+void analyzeUserInput(const std::string& input) {
+	std::istringstream iss(input);
+	std::string word;
+	while (iss >> word) {
+		// 전처리 없이 그대로 빈도 증가
+		wordFrequency[word]++;
+	}
+}
+
+// 파일 읽기 함수 추가
+void loadRecommendCount(const std::string& filename)
+{
+	std::ifstream file(filename);
+	if (!file.is_open())
+	{
+		std::cerr << "추천 횟수 파일을 열 수 없습니다. 새로 생성합니다: " << filename << "\n";
+		return;
+	}
+
+	std::string line;
+	while (std::getline(file, line))
+	{
+		std::istringstream iss(line);
+		std::string clubName;
+		int count = 0;
+		if (iss >> clubName >> count)
+		{
+			clubRecommendCount[clubName] = count;
+		}
+	}
+	file.close();
+}
+
+// 파일 저장 함수 추가
+void saveRecommendCount(const std::string& filename)
+{
+	std::ofstream file(filename);
+	if (!file.is_open())
+	{
+		std::cerr << "추천 횟수 파일을 저장할 수 없습니다: " << filename << "\n";
+		return;
+	}
+
+	for (const auto& pair : clubRecommendCount)
+	{
+		file << pair.first << " " << pair.second << "\n";
+	}
+	file.close();
+}
+
+
+
+// 잠재 키워드 후보 출력
+void printCandidateKeywords(int threshold) {
+	std::cout << "\n잠재 키워드 후보 (빈도 " << threshold << " 이상):\n";
+	bool found = false;
+	for (const auto& pair : wordFrequency) {
+		if (pair.second >= threshold) {
+			std::cout << pair.first << " (" << pair.second << "회)\n";
+			found = true;
+		}
+	}
+	if (!found) {
+		std::cout << "(없음)\n";
+	}
+}
 
 // 사용자 입력 함수
 std::string getUserInput(const std::string& prompt)
@@ -58,10 +129,7 @@ void printRecommendedClubs(const std::string& key, const std::vector<std::string
 	for (size_t i = 0; i < clubs.size(); ++i)
 	{
 		std::cout << clubs[i];
-		if (clubs[i] != "CERT")
-		{
-			clubRecommendCount[clubs[i]]++;
-		}
+		clubRecommendCount[clubs[i]]++;
 		if (i != clubs.size() - 1)
 		{
 			std::cout << ", ";
@@ -144,8 +212,21 @@ int main()
 	std::map<std::string, std::vector<std::string>> keyword;
 	std::map<std::string, std::string> similarWords; // 유사어 저장용
 
+	// 추천 횟수 저장 파일명
+	const std::string recommendCountFile = "recommend_count.txt";
+
+	// 기존 데이터 로드
+	loadRecommendCount(recommendCountFile);
+
 	// 키워드 등록
 	keyword["코딩"] = { "COSMIC", "CaTs", "CERT" };
+	keyword["스포츠"] = { "H.I.T", "BBP", "setup", "ACE", "SPLIT", "EDGE", "다마스", "lightweight", "북두칠성"};
+	keyword["댄스"] = { "SIVA CREW" };
+	keyword["게임"] = { "Online Club" };
+	keyword["여행"] = { "NAWoo", ""};
+	keyword["응원단"] = { "늘해랑" };
+	keyword["뮤지컬"] = { "AMUSEMENT" };
+
 
 	// 유사어 파일 로드
 	loadSimilarWords("C:\\Users\\pring\\Desktop\\similar_words.txt", similarWords); // 유사어 파일 로드
@@ -155,10 +236,33 @@ int main()
 
 	if (categoryInput == "관심 주제" || categoryInput == "관심주제")
 	{
-		std::string userInput = getUserInput("요즘 관심 있는 주제에 대해 자유롭게 입력해주세요!\n\n");
-		processInterestInput(userInput, keyword, similarWords); // 관심 키워드 처리 함수 호출
+		while (true)
+		{
+			std::string userInput = getUserInput("요즘 관심 있는 주제에 대해 자유롭게 입력해주세요!\n\n");
+			if (userInput == "exit") break;
+
+			// 3. 단어 빈도 분석
+			analyzeUserInput(userInput);
+
+			// 4. 추천 처리
+			processInterestInput(userInput, keyword, similarWords); // 관심 키워드 처리 함수 호출
+
+			// 5. 잠재 키워드 후보 출력 (빈도 2 이상 단어)
+			printCandidateKeywords(2);
+
+			std::cout << "\n---------------------\n";
+		}
 	}
+
+	else
+	{
+		std::cout << "현재 지원하지 않는 카테고리입니다.\n";
+	}
+
 
 	// 인기 동아리 순위 출력
 	printPopularClubs();
+
+	// 프로그램 종료 전에 추천 횟수 저장
+	saveRecommendCount(recommendCountFile);
 }
