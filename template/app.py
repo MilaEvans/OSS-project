@@ -60,11 +60,9 @@ def chat():
 
             elif "운동" in user_input:
                 bot_response = "운동 관련 추천: 체대 동아리, 풋살 동아리"
-                image_path = "/static/sports.jpg"
 
             elif "사진" in user_input:
                 bot_response = "예술 감성 추천: 사진 동아리, 그림 동아리"
-                image_path = "/static/photo.jpg"
 
             else:
                 bot_response = "지원되지 않는 키워드입니다. 예: intj, 운동, 사진"
