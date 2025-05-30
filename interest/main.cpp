@@ -22,6 +22,49 @@ void analyzeUserInput(const std::string& input) {
 	}
 }
 
+// 파일 읽기 함수 추가
+void loadRecommendCount(const std::string& filename)
+{
+	std::ifstream file(filename);
+	if (!file.is_open())
+	{
+		std::cerr << "추천 횟수 파일을 열 수 없습니다. 새로 생성합니다: " << filename << "\n";
+		return;
+	}
+
+	std::string line;
+	while (std::getline(file, line))
+	{
+		std::istringstream iss(line);
+		std::string clubName;
+		int count = 0;
+		if (iss >> clubName >> count)
+		{
+			clubRecommendCount[clubName] = count;
+		}
+	}
+	file.close();
+}
+
+// 파일 저장 함수 추가
+void saveRecommendCount(const std::string& filename)
+{
+	std::ofstream file(filename);
+	if (!file.is_open())
+	{
+		std::cerr << "추천 횟수 파일을 저장할 수 없습니다: " << filename << "\n";
+		return;
+	}
+
+	for (const auto& pair : clubRecommendCount)
+	{
+		file << pair.first << " " << pair.second << "\n";
+	}
+	file.close();
+}
+
+
+
 // 잠재 키워드 후보 출력
 void printCandidateKeywords(int threshold) {
 	std::cout << "\n잠재 키워드 후보 (빈도 " << threshold << " 이상):\n";
@@ -172,6 +215,12 @@ int main()
 	std::map<std::string, std::vector<std::string>> keyword;
 	std::map<std::string, std::string> similarWords; // 유사어 저장용
 
+	// 추천 횟수 저장 파일명
+	const std::string recommendCountFile = "recommend_count.txt";
+
+	// 기존 데이터 로드
+	loadRecommendCount(recommendCountFile);
+
 	// 키워드 등록
 	keyword["코딩"] = { "COSMIC", "CaTs", "CERT" };
 	keyword["스포츠"] = { "H.I.T", "BBP", "setup", "ACE", "SPLIT", "EDGE", "다마스", "lightweight", "북두칠성"};
@@ -216,4 +265,7 @@ int main()
 
 	// 인기 동아리 순위 출력
 	printPopularClubs();
+
+	// 프로그램 종료 전에 추천 횟수 저장
+	saveRecommendCount(recommendCountFile);
 }
