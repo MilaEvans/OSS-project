@@ -1,66 +1,3 @@
-<<<<<<< HEAD
-from flask import Flask, request, session, jsonify, render_template
-
-app = Flask(__name__)
-app.secret_key = "your-secret-key"
-
-mbti_data = {
-    "INTJ": ("논리적이고 전략적인 성향", ["개발 동아리", "창업 동아리"], ["코딩", "독서"]),
-    "INTP": ("탐구적이고 분석적인 성향", ["연구 동아리", "프로그래밍 동아리"], ["퍼즐", "과학"]),
-    "ENTJ": ("계획적이고 리더십 강한 성향", ["경영 동아리", "창업 동아리"], ["리더십 게임", "토론"]),
-    "ENTP": ("아이디어 넘치는 토론가", ["발명 동아리", "토론 동아리"], ["즉흥 연설", "토론"]),
-    "INFJ": ("이상주의적 조력자", ["봉사 동아리", "문학 동아리"], ["글쓰기", "상담"]),
-    "INFP": ("감성적이고 가치 지향적", ["예술 동아리", "시사 동아리"], ["글쓰기", "음악 감상"]),
-    "ENFJ": ("지도력 있고 배려심 많은 성향", ["봉사 동아리", "교육 동아리"], ["멘토링", "공연 기획"]),
-    "ENFP": ("창의적이고 열정적인 성향", ["예술 동아리", "연극 동아리"], ["사진", "여행"]),
-    "ISTJ": ("책임감 강하고 실용적인 성향", ["기록 동아리", "통계 동아리"], ["자료 수집", "가계부 정리"]),
-    "ISFJ": ("헌신적이고 온화한 성향", ["봉사 동아리", "요리 동아리"], ["베이킹", "독서"]),
-    "ESTJ": ("조직적이고 체계적인 성향", ["행정 동아리", "리더십 동아리"], ["플래너 정리", "스케줄 관리"]),
-    "ESFJ": ("사교적이고 배려 깊은 성향", ["환영회 동아리", "학교 행사 기획"], ["친목 활동", "파티 기획"]),
-    "ISTP": ("실용적이고 논리적인 성향", ["기계 동아리", "DIY 동아리"], ["조립", "자동차"]),
-    "ISFP": ("조용하고 예술적인 성향", ["사진 동아리", "음악 동아리"], ["작곡", "그림"]),
-    "ESTP": ("모험을 즐기고 활동적인 성향", ["스포츠 동아리", "댄스 동아리"], ["스포츠", "댄스"]),
-    "ESFP": ("외향적이고 낙천적인 성향", ["공연 동아리", "이벤트 동아리"], ["노래", "연기"]),
-}
-
-interest_club_map = {
-    "농구": "스포츠 동아리",
-    "음악": "밴드 동아리",
-    "코딩": "개발 동아리",
-    "글쓰기": "문학 동아리",
-    "봉사": "봉사 동아리",
-    "여행": "국제 교류 동아리",
-}
-
-@app.route("/")
-def index():
-    return render_template("chat.html")
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    user_input = request.form.get("keyword", "").strip()
-    context = session.get("context", {})
-    response = ""
-
-    if "mbti" not in context:
-        key = user_input.upper()
-        if key in mbti_data:
-            context["mbti"] = key
-            personality, clubs, hobbies = mbti_data[key]
-            response = f"[MBTI 분석 결과: {key}]\n성격 성향: {personality}\n추천 동아리: {', '.join(clubs)}\n추천 취미 키워드: {', '.join(hobbies)}\n\n어떤 관심 키워드가 있으신가요?"
-        else:
-            response = "먼저 유효한 MBTI를 입력해주세요. 예: infp"
-    elif "interest" not in context:
-        context["interest"] = user_input
-        club = interest_club_map.get(user_input, "다양한 동아리 중에서 탐색해보세요!")
-        response = f"관심 키워드 '{user_input}'에 대해 추천: {club}"
-    else:
-        response = f"입력하신 MBTI는 {context['mbti']}, 관심사는 {context['interest']}입니다.\n새로운 질문을 하시려면 새로고침해주세요."
-
-    session["context"] = context
-    return render_template("chat.html", user_input=user_input, bot_response=response, image_path=None)
-
-=======
 from flask import Flask, request, render_template, session
 import subprocess
 import os
@@ -77,6 +14,12 @@ VALID_MBTI = {
     "ISTJ", "ISFJ", "ESTJ", "ESFJ",
     "ISTP", "ISFP", "ESTP", "ESFP"
 }
+
+def extract_mbti_and_interest(text):
+    words = text.upper().split()
+    mbti = next((w for w in words if w in VALID_MBTI), None)
+    interest = " ".join([w for w in text.split() if w.upper() != mbti]) if mbti else text
+    return mbti, interest.strip()
 
 @app.route("/", methods=["GET"])
 def index():
@@ -103,34 +46,36 @@ def chat():
             image_path = f"/static/uploads/{filename}"
 
         elif user_input:
-            upper_input = user_input.upper()
+            mbti, interest = extract_mbti_and_interest(user_input)
 
-            if upper_input in VALID_MBTI:
+            if mbti:
                 exe_path = os.path.join(os.path.dirname(__file__), 'mbti_project', 'MixedMbti.exe')
                 result = subprocess.run(
-                    [exe_path, upper_input],
+                    [exe_path, mbti],
                     text=True,
                     capture_output=True,
-                    encoding='utf-8',  
+                    encoding='utf-8',
                     errors='replace'
                 )
 
                 if result.returncode != 0:
-                    bot_response = f"[실패] 오류 발생: {result.stderr.strip() if result.stderr else '실패 원인 불명'}"
+                    bot_response = f"[MBTI 분석 실패] {result.stderr.strip() if result.stderr else '원인 불명'}"
                 else:
-                    bot_response = result.stdout.strip() if result.stdout else "[경고] 출력 없음"
+                    bot_response = result.stdout.strip() or "[MBTI 분석 결과 없음]"
                 image_path = "/static/sports.jpg"
-
-            elif "운동" in user_input:
-                bot_response = "운동 관련 추천: 체대 동아리, 풋살 동아리"
-                image_path = "/static/sports.jpg"
-
-            elif "사진" in user_input:
-                bot_response = "예술 감성 추천: 사진 동아리, 그림 동아리"
-                image_path = "/static/photo.jpg"
-
             else:
-                bot_response = "지원되지 않는 키워드입니다. 예: intj, 운동, 사진"
+                bot_response = ""
+
+            if interest:
+                if "운동" in interest or "농구" in interest:
+                    bot_response += "\n운동 관련 추천: 체대 동아리, 농구 동아리"
+                    image_path = "/static/sports.jpg"
+                elif "사진" in interest or "그림" in interest:
+                    bot_response += "\n예술 관련 추천: 사진 동아리, 미술 동아리"
+                    image_path = "/static/photo.jpg"
+                elif not mbti:
+                    bot_response = f"키워드 '{interest}'에 대한 추천만 제공됩니다.\n예: 운동, 사진"
+
         else:
             bot_response = "텍스트 또는 이미지를 입력해주세요."
 
@@ -149,7 +94,3 @@ def clear():
     session.pop("history", None)
     return render_template("chat.html", history=[])
 
-if __name__ == "__main__":
-    print("✅ Flask 서버 시작 중... http://127.0.0.1:5000")
-    app.run(debug=True)
->>>>>>> 3ab1ef87400f3985f36bf433473e72511abc279e
