@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, session
 import subprocess
 import os
+import re
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'template'))
@@ -16,10 +17,23 @@ VALID_MBTI = {
 }
 
 def extract_mbti_and_interest(text):
-    words = text.upper().split()
-    mbti = next((w for w in words if w in VALID_MBTI), None)
-    interest = " ".join([w for w in text.split() if w.upper() != mbti]) if mbti else text
-    return mbti, interest.strip()
+    text = text.lower()
+    mbti_found = None
+    interest_found = None
+
+    # MBTI 정규표현식
+    for mbti in VALID_MBTI:
+        if re.search(rf"\b{mbti.lower()}\b", text):
+            mbti_found = mbti
+            break
+
+    # 간단한 키워드 분석 예시
+    if any(word in text for word in ["운동", "축구", "농구"]):
+        interest_found = "운동"
+    elif any(word in text for word in ["사진", "그림", "예술"]):
+        interest_found = "사진"
+
+    return mbti_found, interest_found
 
 @app.route("/", methods=["GET"])
 def index():
