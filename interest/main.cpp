@@ -206,6 +206,27 @@ void processInterestInput(const std::string& userInput,
 	}
 }
 
+// 저녁 시간대에 활동할 수 있는 동아리 추천 함수
+void checkEveningActivity(const std::string& userInput, const std::vector<std::string>& eveningClubs)
+{
+	std::string lowered = userInput;
+	std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
+
+	// "저녁" 또는 "밤" + "동아리" 또는 "활동" 포함 여부 검사
+	if ((lowered.find("저녁") != std::string::npos || lowered.find("밤") != std::string::npos) &&
+		(lowered.find("동아리") != std::string::npos || lowered.find("활동") != std::string::npos))
+	{
+		std::cout << "저녁 시간대에 활동할 수 있는 동아리는 다음과 같아요:\n";
+		for (const auto& club : eveningClubs)
+		{
+			std::cout << "- " << club << "\n";
+			clubRecommendCount[club]++;  // 추천 횟수 누적
+		}
+		std::cout << "\n";
+	}
+}
+
+
 
 int main()
 {
@@ -227,6 +248,13 @@ int main()
 	keyword["응원단"] = { "늘해랑" };
 	keyword["뮤지컬"] = { "AMUSEMENT" };
 
+	std::vector<std::string> eveningClubs = {
+	"SIVA CREW",  // 댄스
+	"AMUSEMENT",  // 뮤지컬
+	"COSMIC",     // 코딩
+	"늘해랑"      // 응원단
+	};
+
 
 	// 유사어 파일 로드
 	loadSimilarWords("C:\\Users\\pring\\Desktop\\similar_words.txt", similarWords); // 유사어 파일 로드
@@ -240,6 +268,9 @@ int main()
 		{
 			std::string userInput = getUserInput("요즘 관심 있는 주제에 대해 자유롭게 입력해주세요!\n\n");
 			if (userInput == "exit") break;
+
+			// 2. 저녁 시간대 동아리 질문 확인 및 추천
+			checkEveningActivity(userInput, eveningClubs);
 
 			// 3. 단어 빈도 분석
 			analyzeUserInput(userInput);
