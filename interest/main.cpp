@@ -4,6 +4,10 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
+
+
+std::map<std::string, int> clubRecommendCount;
 
 // 사용자 입력 함수
 std::string getUserInput(const std::string& prompt)
@@ -47,19 +51,46 @@ void loadSimilarWords(const std::string& filename, std::map<std::string, std::st
 	file.close();
 }
 
-// 추천 동아리 출력 함수
+// 추천 동아리 출력 및 추천 횟수 누적 함수
 void printRecommendedClubs(const std::string& key, const std::vector<std::string>& clubs)
 {
 	std::cout << "추천 동아리 (" << key << " 관련): ";
 	for (size_t i = 0; i < clubs.size(); ++i)
 	{
 		std::cout << clubs[i];
+		if (clubs[i] != "CERT")
+		{
+			clubRecommendCount[clubs[i]]++;
+		}
 		if (i != clubs.size() - 1)
 		{
 			std::cout << ", ";
 		}
 	}
 	std::cout << "\n";
+}
+
+// 인기 동아리 순위 출력 함수
+void printPopularClubs()
+{
+	if (clubRecommendCount.empty())
+	{
+		std::cout << "\n(아직 추천된 동아리가 없습니다)\n";
+		return;
+	}
+
+	std::vector<std::pair<std::string, int>> clubList(clubRecommendCount.begin(), clubRecommendCount.end());
+
+	std::sort(clubList.begin(), clubList.end(), [](const auto& a, const auto& b) {
+		return a.second > b.second; // 추천 횟수 기준 내림차순 정렬
+		});
+
+	std::cout << "\n인기 동아리 순위 \n";
+	int rank = 1;
+	for (const auto& entry : clubList)
+	{
+		std::cout << rank++ << "위: " << entry.first << " (" << entry.second << "회 추천됨)\n";
+	}
 }
 
 // 키워드 및 유사어 기반 추천 로직 함수
@@ -127,4 +158,7 @@ int main()
 		std::string userInput = getUserInput("요즘 관심 있는 주제에 대해 자유롭게 입력해주세요!\n\n");
 		processInterestInput(userInput, keyword, similarWords); // 관심 키워드 처리 함수 호출
 	}
+
+	// 인기 동아리 순위 출력
+	printPopularClubs();
 }
