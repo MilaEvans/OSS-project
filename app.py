@@ -1,9 +1,13 @@
 from flask import Flask, request, render_template, session
 import subprocess
 import os
+import re
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'template'))
+app = Flask(
+    __name__,
+    template_folder=os.path.join(os.path.dirname(__file__), 'template')  
+)
 app.secret_key = 'very_secret_key'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -15,16 +19,48 @@ VALID_MBTI = {
     "ISTP", "ISFP", "ESTP", "ESFP"
 }
 
+INTEREST_KEYWORDS = {
+    "운동":   ["운동", "축구", "농구", "헬스", "배드민턴", "러닝", "야구", "탁구"],
+    "예술":   ["사진", "그림", "예술", "드로잉", "디자인", "페인팅"],
+    "음악":   ["노래", "음악", "연주", "작곡", "기타", "피아노"],
+    "봉사":   ["봉사", "기부", "도움", "자원봉사"],
+    "토론":   ["토론", "토의", "의견", "논쟁", "스피치", "연설"],
+    "IT":     ["코딩", "프로그래밍", "개발", "해킹", "컴퓨터", "AI", "인공지능"],
+    "창업":   ["창업", "비즈니스", "마케팅", "기획", "스타트업"],
+    "문학":   ["책", "소설", "시", "글쓰기", "에세이"],
+}
+
+def extract_mbti_and_interest(text):
+    """
+    텍스트에서 MBTI(대문자)와 관심사 카테고리를 추출합니다.
+    """
+    
+    t = text.lower()
+    t = re.sub(r"[은는이가요의을를]", " ", t)
+
+    mbti_found = None
+    for mbti in VALID_MBTI:
+        if mbti.lower() in t:
+            mbti_found = mbti
+            break
+
+    interest_found = None
+    for category, kws in INTEREST_KEYWORDS.items():
+        if any(kw in t for kw in kws):
+            interest_found = category
+            break
+
+    return mbti_found, interest_found
+
 @app.route("/", methods=["GET"])
 def index():
-    if "history" not in session:
-        session["history"] = []
+    
+    session.setdefault("history", [])
     return render_template("chat.html", history=session["history"])
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    if "history" not in session:
-        session["history"] = []
+    session.setdefault("history", [])
 
     user_input = request.form.get("keyword", "").strip()
     uploaded_file = request.files.get("image")
@@ -32,48 +68,79 @@ def chat():
     bot_response = ""
 
     try:
-        if uploaded_file and uploaded_file.filename != "":
+        
+        if uploaded_file and uploaded_file.filename:
             filename = secure_filename(uploaded_file.filename)
             saved_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             uploaded_file.save(saved_path)
             bot_response = f"이미지 '{filename}'이 업로드되었습니다. (분석 기능 없음)"
             image_path = f"/static/uploads/{filename}"
 
+       
         elif user_input:
-            upper_input = user_input.upper()
+            mbti, interest = extract_mbti_and_interest(user_input)
 
-            if upper_input in VALID_MBTI:
-                exe_path = os.path.join(os.path.dirname(__file__), 'mbti_project', 'MixedMbti.exe')
+            
+            if mbti:
+                exe_path = os.path.join(
+                    os.path.dirname(__file__),
+                    'mbti_project',
+                    'MixedMbti.exe'
+                )
                 result = subprocess.run(
-                    [exe_path, upper_input],
+                    [exe_path, mbti],
                     text=True,
                     capture_output=True,
-                    encoding='utf-8',  
+                    encoding='utf-8',
                     errors='replace'
                 )
-
                 if result.returncode != 0:
-                    bot_response = f"[실패] 오류 발생: {result.stderr.strip() if result.stderr else '실패 원인 불명'}"
+                    bot_response = f"[MBTI 분석 실패] {result.stderr.strip() or '원인 불명'}"
                 else:
-                    bot_response = result.stdout.strip() if result.stdout else "[경고] 출력 없음"
+                    bot_response = result.stdout.strip() or "[MBTI 분석 결과 없음]"
+                
                 image_path = "/static/sports.jpg"
-
-            elif "운동" in user_input:
-                bot_response = "운동 관련 추천: 체대 동아리, 풋살 동아리"
-                image_path = "/static/sports.jpg"
-
-            elif "사진" in user_input:
-                bot_response = "예술 감성 추천: 사진 동아리, 그림 동아리"
-                image_path = "/static/photo.jpg"
-
             else:
-                bot_response = "지원되지 않는 키워드입니다. 예: intj, 운동, 사진"
+                bot_response = ""
+
+            
+            if interest:
+                if interest == "운동":
+                    bot_response += "\n운동 관련 추천: 체대 동아리, 풋살 동아리, 농구 동아리"
+                    
+                elif interest == "예술":
+                    bot_response += "\n예술 관련 추천: 사진 동아리, 디자인 동아리"
+                    
+                elif interest == "음악":
+                    bot_response += "\n음악 관련 추천: 밴드 동아리, 작곡 동아리"
+                    
+                elif interest == "봉사":
+                    bot_response += "\n봉사 관련 추천: 봉사 동아리, 나눔 동아리"
+                    
+                elif interest == "토론":
+                    bot_response += "\n토론 관련 추천: 토론 동아리, 스피치 동아리"
+                    
+                elif interest == "IT":
+                    bot_response += "\n개발 관련 추천: 프로그래밍 동아리, 해킹 동아리"
+                    
+                elif interest == "창업":
+                    bot_response += "\n창업 관련 추천: 창업 동아리, 스타트업 동아리"
+                    
+                elif interest == "문학":
+                    bot_response += "\n문학 관련 추천: 문학 동아리, 창작 동아리"
+                    
+            else:
+                
+                if not mbti:
+                    bot_response = "지원되지 않는 키워드입니다. 예: infp, 운동, 예술, 음악, IT, 봉사, 토론, 창업, 문학"
+
         else:
             bot_response = "텍스트 또는 이미지를 입력해주세요."
 
     except Exception as e:
         bot_response = f"오류 발생: {str(e)}"
 
+    
     if user_input:
         session["history"].append(("user", user_input))
     session["history"].append(("bot", bot_response))
