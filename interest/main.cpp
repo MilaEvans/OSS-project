@@ -386,6 +386,30 @@ void recommendClubsByDay(const std::string& userInput, const std::map<std::strin
 	}
 }
 
+// 통합 필터링 함수: 관심 주제, 요일, 시간대, 비용, 위치 모두 적용해서 동아리 필터링 후 추천
+void recommendClubsByCombinedConditions(
+	const std::string& userInput,
+	const std::map<std::string, std::vector<std::string>>& keywordMap,
+	const std::map<std::string, std::string>& similarWords,
+	const std::map<std::string, std::vector<std::string>>& dayClubs,
+	const std::vector<std::string>& allClubs)
+{
+	// 조건 플래그, 변수들
+	bool wantFree = false, wantPaid = false;
+	bool wantOffline = false, wantOnline = false;
+	std::string selectedDay = "";
+	std::string selectedTime = ""; // "오전", "오후", "저녁" 중 하나
+	std::vector<std::string> matchedKeywords; // 관심 주제 키워드
+
+	std::string lowered = userInput;
+	std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
+
+	// 비용 조건 파악
+	if (lowered.find("무료") != std::string::npos || lowered.find("저렴") != std::string::npos || lowered.find("싸다") != std::string::npos || lowered.find("비용 없다") != std::string::npos || lowered.find("공짜") != std::string::npos)
+		wantFree = true;
+	if (lowered.find("비싸다") != std::string::npos || lowered.find("유료") != std::string::npos || lowered.find("비용 있다") != std::string::npos || lowered.find("고급") != std::string::npos)
+		wantPaid = true;
+
 
 int main()
 {
