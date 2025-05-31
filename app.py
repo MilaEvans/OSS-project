@@ -68,7 +68,6 @@ def chat():
     bot_response = ""
 
     try:
-        
         if uploaded_file and uploaded_file.filename:
             filename = secure_filename(uploaded_file.filename)
             saved_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -76,11 +75,11 @@ def chat():
             bot_response = f"이미지 '{filename}'이 업로드되었습니다. (분석 기능 없음)"
             image_path = f"/static/uploads/{filename}"
 
-       
         elif user_input:
             mbti, interest = extract_mbti_and_interest(user_input)
+            mbti_response = ""
+            interest_response = ""
 
-            
             if mbti:
                 exe_path = os.path.join(
                     os.path.dirname(__file__),
@@ -95,44 +94,33 @@ def chat():
                     errors='replace'
                 )
                 if result.returncode != 0:
-                    bot_response = f"[MBTI 분석 실패] {result.stderr.strip() or '원인 불명'}"
+                    mbti_response = f"[MBTI 분석 실패] {result.stderr.strip() or '원인 불명'}"
                 else:
-                    bot_response = result.stdout.strip() or "[MBTI 분석 결과 없음]"
-                
-                image_path = "/static/sports.jpg"
-            else:
-                bot_response = ""
+                    mbti_response = result.stdout.strip() or "[MBTI 분석 결과 없음]"
 
-            
+                image_path = "/static/sports.jpg"
+
             if interest:
-                if interest == "운동":
-                    bot_response += "\n운동 관련 추천: 체대 동아리, 풋살 동아리, 농구 동아리"
-                    
-                elif interest == "예술":
-                    bot_response += "\n예술 관련 추천: 사진 동아리, 디자인 동아리"
-                    
-                elif interest == "음악":
-                    bot_response += "\n음악 관련 추천: 밴드 동아리, 작곡 동아리"
-                    
-                elif interest == "봉사":
-                    bot_response += "\n봉사 관련 추천: 봉사 동아리, 나눔 동아리"
-                    
-                elif interest == "토론":
-                    bot_response += "\n토론 관련 추천: 토론 동아리, 스피치 동아리"
-                    
-                elif interest == "IT":
-                    bot_response += "\n개발 관련 추천: 프로그래밍 동아리, 해킹 동아리"
-                    
-                elif interest == "창업":
-                    bot_response += "\n창업 관련 추천: 창업 동아리, 스타트업 동아리"
-                    
-                elif interest == "문학":
-                    bot_response += "\n문학 관련 추천: 문학 동아리, 창작 동아리"
-                    
+                interest_map = {
+                    "운동": "운동 관련 추천: 체대 동아리, 풋살 동아리, 농구 동아리",
+                    "예술": "예술 관련 추천: 사진 동아리, 디자인 동아리",
+                    "음악": "음악 관련 추천: 밴드 동아리, 작곡 동아리",
+                    "봉사": "봉사 관련 추천: 봉사 동아리, 나눔 동아리",
+                    "토론": "토론 관련 추천: 토론 동아리, 스피치 동아리",
+                    "IT": "개발 관련 추천: 프로그래밍 동아리, 해킹 동아리",
+                    "창업": "창업 관련 추천: 창업 동아리, 스타트업 동아리",
+                    "문학": "문학 관련 추천: 문학 동아리, 창작 동아리"
+                }
+                interest_response = interest_map.get(interest, "")
+
+            if not mbti and not interest:
+                bot_response = "지원되지 않는 키워드입니다. 예: infp, 운동, 예술, 음악, IT, 봉사, 토론, 창업, 문학"
             else:
                 
-                if not mbti:
-                    bot_response = "지원되지 않는 키워드입니다. 예: infp, 운동, 예술, 음악, IT, 봉사, 토론, 창업, 문학"
+                bot_response = mbti_response
+                if mbti_response and interest_response:
+                    bot_response += "\n"
+                bot_response += interest_response
 
         else:
             bot_response = "텍스트 또는 이미지를 입력해주세요."
@@ -140,7 +128,6 @@ def chat():
     except Exception as e:
         bot_response = f"오류 발생: {str(e)}"
 
-    
     if user_input:
         session["history"].append(("user", user_input))
     session["history"].append(("bot", bot_response))
