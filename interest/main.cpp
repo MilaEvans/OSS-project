@@ -14,6 +14,7 @@ struct ClubInfo {
 	bool hasFee;
 	std::string time;
 	std::string day;
+	std::string location;  // 추가: "오프라인" 또는 "온라인"
 };
 
 ClubInfo generateFixedInfo(const std::string& clubName) {
@@ -21,10 +22,12 @@ ClubInfo generateFixedInfo(const std::string& clubName) {
 	size_t hash = hasher(clubName);
 
 	bool hasFee = (hash % 2 == 0);
-	size_t timeIdx = days.size();
+	size_t timeIdx = (hash / 2) % timeSlots.size();
 	size_t dayIdx = (hash / (2 * timeSlots.size())) % days.size();
 
-	return ClubInfo{ hasFee, timeSlots[timeIdx], days[dayIdx] };
+	std::string location = ((hash / (2 * timeSlots.size() * days.size())) % 2 == 0) ? "오프라인" : "온라인";
+
+	return ClubInfo{ hasFee, timeSlots[timeIdx], days[dayIdx], location };
 }
 
 // 단어 빈도 저장용
@@ -84,6 +87,35 @@ void recommendClubsByBudget(const std::string& userInput, const std::vector<std:
 	}
 }
 
+void recommendByLocation(const std::string& userInput,
+	const std::vector<std::string>& offlineClubs,
+	const std::vector<std::string>& onlineClubs) {
+	std::string lowered = userInput;
+	std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
+
+	bool wantOffline = (lowered.find("오프라인") != std::string::npos);
+	bool wantOnline = (lowered.find("온라인") != std::string::npos);
+
+	if (!wantOffline && !wantOnline) return;
+
+	if (wantOffline) {
+		std::cout << "\n오프라인에서 활동할 수 있는 동아리:\n";
+		for (const auto& club : offlineClubs) {
+			std::cout << "- " << club << "\n";
+			clubRecommendCount[club]++;
+		}
+		std::cout << "\n";
+	}
+
+	if (wantOnline) {
+		std::cout << "\n온라인에서 활동할 수 있는 동아리:\n";
+		for (const auto& club : onlineClubs) {
+			std::cout << "- " << club << "\n";
+			clubRecommendCount[club]++;
+		}
+		std::cout << "\n";
+	}
+}
 
 // 사용자 입력에서 단어 추출 및 빈도 증가 함수
 void analyzeUserInput(const std::string& input) {
@@ -383,6 +415,7 @@ int main()
 	keyword["요리"] = { "요리해요", "간식만들기", "베이킹클럽", "맛있는시간", "요리친구들" }; 
 
 	std::vector<std::string> budgetClubs, morningClubs, afternoonClubs, eveningClubs, allClubs;
+	std::vector<std::string> offlineClubs, onlineClubs;  // 추가
 
 	for (const auto& pair : keyword) {
 		for (const auto& club : pair.second) {
@@ -393,8 +426,13 @@ int main()
 			else if (info.time == "오후") afternoonClubs.push_back(club);
 			else if (info.time == "저녁") eveningClubs.push_back(club);
 			dayClubs[info.day].push_back(club);
+
+			// 오프라인/온라인 구분 추가
+			if (info.location == "오프라인") offlineClubs.push_back(club);
+			else if (info.location == "온라인") onlineClubs.push_back(club);
 		}
 	}
+
 
 
 
@@ -429,6 +467,9 @@ int main()
 			// 5. 잠재 키워드 후보 출력 (빈도 2 이상 단어)
 
 			printCandidateKeywords(2);
+
+			// 6. 오프라인, 온라인
+			recommendByLocation(userInput, offlineClubs, onlineClubs);
 
 			std::cout << "\n---------------------\n";
 		}
