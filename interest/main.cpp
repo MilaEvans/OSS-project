@@ -5,6 +5,27 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <functional>  // std::hash
+
+const std::vector<std::string> timeSlots = { "오전", "오후", "저녁" };
+const std::vector<std::string> days = { "월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일" };
+
+struct ClubInfo {
+	bool hasFee;
+	std::string time;
+	std::string day;
+};
+
+ClubInfo generateFixedInfo(const std::string& clubName) {
+	std::hash<std::string> hasher;
+	size_t hash = hasher(clubName);
+
+	bool hasFee = (hash % 2 == 0);
+	size_t timeIdx = days.size();
+	size_t dayIdx = (hash / (2 * timeSlots.size())) % days.size();
+
+	return ClubInfo{ hasFee, timeSlots[timeIdx], days[dayIdx] };
+}
 
 // 단어 빈도 저장용
 std::map<std::string, int> wordFrequency;
@@ -14,22 +35,55 @@ std::map<std::string, int> clubRecommendCount;
 
 
 // 예산/비용 관련 동아리 추천
-void recommendClubsByBudget(const std::string& userInput, const std::vector<std::string>& budgetClubs) {
+void recommendClubsByBudget(const std::string& userInput, const std::vector<std::string>& allClubs) {
 	std::string lowered = userInput;
 	std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
 
-	if (lowered.find("예산") != std::string::npos || lowered.find("비용") != std::string::npos ||
-		lowered.find("싸다") != std::string::npos || lowered.find("무료") != std::string::npos ||
-		lowered.find("비싸다") != std::string::npos)
-	{
-		std::cout << "\n예산을 고려해 가입할 수 있는 저렴한 동아리는 다음과 같아요:\n";
-		for (const auto& club : budgetClubs) {
+	bool wantFree = (
+		lowered.find("무료") != std::string::npos ||
+		lowered.find("저렴") != std::string::npos ||
+		lowered.find("싸다") != std::string::npos ||
+		lowered.find("비용 없다") != std::string::npos ||
+		lowered.find("공짜") != std::string::npos
+		);
+
+	bool wantPaid = (
+		lowered.find("비싸다") != std::string::npos ||
+		lowered.find("유료") != std::string::npos ||
+		lowered.find("비용 있다") != std::string::npos ||
+		lowered.find("고급") != std::string::npos
+		);
+
+	if (!wantFree && !wantPaid) return;
+
+	std::vector<std::string> result;
+
+	for (const auto& club : allClubs) {
+		ClubInfo info = generateFixedInfo(club);
+
+		if (wantFree && !info.hasFee) {
+			result.push_back(club);
+		}
+		else if (wantPaid && info.hasFee) {
+			result.push_back(club);
+		}
+	}
+
+	if (!result.empty()) {
+		if (wantFree) {
+			std::cout << "\n비용이 들지 않는 동아리는 다음과 같아요:\n";
+		}
+		else if (wantPaid) {
+			std::cout << "\n비용이 드는 동아리는 다음과 같아요:\n";
+		}
+		for (const auto& club : result) {
 			std::cout << "- " << club << "\n";
 			clubRecommendCount[club]++;
 		}
 		std::cout << "\n";
 	}
 }
+
 
 // 사용자 입력에서 단어 추출 및 빈도 증가 함수
 void analyzeUserInput(const std::string& input) {
@@ -81,8 +135,6 @@ void saveRecommendCount(const std::string& filename)
 	}
 	file.close();
 }
-
-
 
 // 잠재 키워드 후보 출력
 void printCandidateKeywords(int threshold) {
@@ -225,6 +277,45 @@ void processInterestInput(const std::string& userInput,
 	}
 }
 
+
+// 오전 시간대에 활동할 수 있는 동아리 추천 함수
+void checkMorningActivity(const std::string& userInput, const std::vector<std::string>& morningClubs)
+{
+	std::string lowered = userInput;
+	std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
+
+	if ((lowered.find("오전") != std::string::npos || lowered.find("아침") != std::string::npos) &&
+		(lowered.find("동아리") != std::string::npos || lowered.find("활동") != std::string::npos))
+	{
+		std::cout << "오전 시간대에 활동할 수 있는 동아리는 다음과 같아요:\n";
+		for (const auto& club : morningClubs)
+		{
+			std::cout << "- " << club << "\n";
+			clubRecommendCount[club]++;
+		}
+		std::cout << "\n";
+	}
+}
+
+// 오후 시간대에 활동할 수 있는 동아리 추천 함수
+void checkAfternoonActivity(const std::string& userInput, const std::vector<std::string>& afternoonClubs)
+{
+	std::string lowered = userInput;
+	std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
+
+	if ((lowered.find("오후") != std::string::npos || lowered.find("점심") != std::string::npos) &&
+		(lowered.find("동아리") != std::string::npos || lowered.find("활동") != std::string::npos))
+	{
+		std::cout << "오후 시간대에 활동할 수 있는 동아리는 다음과 같아요:\n";
+		for (const auto& club : afternoonClubs)
+		{
+			std::cout << "- " << club << "\n";
+			clubRecommendCount[club]++;
+		}
+		std::cout << "\n";
+	}
+}
+
 // 저녁 시간대에 활동할 수 있는 동아리 추천 함수
 void checkEveningActivity(const std::string& userInput, const std::vector<std::string>& eveningClubs)
 {
@@ -268,7 +359,7 @@ int main()
 {
 	std::map<std::string, std::vector<std::string>> keyword;
 	std::map<std::string, std::string> similarWords; // 유사어 저장용
-
+	std::map<std::string, std::vector<std::string>> dayClubs;
 	// 추천 횟수 저장 파일명
 	const std::string recommendCountFile = "recommend_count.txt";
 
@@ -276,36 +367,39 @@ int main()
 	loadRecommendCount(recommendCountFile);
 
 	// 키워드 등록
-	keyword["코딩"] = { "COSMIC", "CaTs", "CERT" };
-	keyword["스포츠"] = { "H.I.T", "BBP", "setup", "ACE", "SPLIT", "EDGE", "다마스", "lightweight", "북두칠성"};
-	keyword["댄스"] = { "SIVA CREW" };
-	keyword["게임"] = { "Online Club" };
-	keyword["여행"] = { "NAWoo", ""};
-	keyword["응원단"] = { "늘해랑" };
-	keyword["뮤지컬"] = { "AMUSEMENT" };
+	keyword["코딩"] = { "코딩하는친구들", "밤샘코딩", "코드수다방", "오픈소스동네", "디버깅모임" };
+	keyword["운동"] = { "땀흘리기", "운동하자", "뛰뛰빵빵", "런닝메이트", "주말농구" }; 
+	keyword["댄스"] = { "춤추는우리", "리듬따라", "뽐내기댄스", "비트속으로", "즐거운댄스" }; 
+	keyword["게임"] = { "게임하러모여", "보드게임존", "게임친구들", "온라인모험단", "게임톡" };
+	keyword["여행"] = { "여행가자", "떠나볼까", "길따라걷기", "캠핑가족", "바람따라" };
+	keyword["음악"] = { "음악좋아", "노래방친구들", "멜로디모임", "악기연주회", "소리모아" };
+	keyword["자기개발"] = { "함께성장", "작은도전", "꿈꾸는우리", "스킬업", "자기관리" };
+	keyword["독서"] = { "책읽는시간", "책모임", "한줄토크", "읽고싶은책", "독서친구" };
+	keyword["봉사"] = { "도움의손길", "함께나누기", "따뜻한마음", "봉사모임", "기쁨나누기" }; 
+	keyword["사진"] = { "찰칵찰칵", "사진찍기좋아", "풍경사진", "우리사진관", "사진산책" }; 
+	keyword["영상"] = { "영상찍자", "영상편집모임", "필름러버", "우리영상", "유튜브친구들" };
+	keyword["미술"] = { "그림그리기", "낙서모임", "아트타임", "색칠놀이", "손그림모임" };
+	keyword["연극"] = { "연극놀이", "무대연습", "연기하는우리", "즉흥연기", "연극모임" };
+	keyword["요리"] = { "요리해요", "간식만들기", "베이킹클럽", "맛있는시간", "요리친구들" }; 
 
-	std::vector<std::string> eveningClubs = {
-	"SIVA CREW",  // 댄스
-	"AMUSEMENT",  // 뮤지컬
-	"COSMIC",     // 코딩
-	"늘해랑"      // 응원단
-	};
+	std::vector<std::string> budgetClubs, morningClubs, afternoonClubs, eveningClubs, allClubs;
 
-	std::vector<std::string> budgetClubs = { "CaTs", "NAWoo", "COSMIC", "Online Club" }; // 예산 고려 동아리
+	for (const auto& pair : keyword) {
+		for (const auto& club : pair.second) {
+			allClubs.push_back(club);
+			ClubInfo info = generateFixedInfo(club);
+			if (!info.hasFee) budgetClubs.push_back(club);
+			if (info.time == "오전") morningClubs.push_back(club);
+			else if (info.time == "오후") afternoonClubs.push_back(club);
+			else if (info.time == "저녁") eveningClubs.push_back(club);
+			dayClubs[info.day].push_back(club);
+		}
+	}
 
-	// 요일별 동아리 리스트
-	std::map<std::string, std::vector<std::string>> dayClubs = {
-		{"월요일", {"COSMIC", "H.I.T"}},
-		{"화요일", {"SIVA CREW", "Online Club"}},
-		{"수요일", {"AMUSEMENT", "CaTs"}},
-		{"목요일", {"NAWoo", "늘해랑"}},
-		{"금요일", {"BBP", "setup"}},
-		{"토요일", {"EDGE", "SPLIT"}},
-		{"일요일", {"북두칠성", "다마스"}}
-	};
+
 
 	// 유사어 파일 로드
-	loadSimilarWords("C:\\Users\\pring\\Desktop\\similar_words.txt", similarWords); // 유사어 파일 로드
+	loadSimilarWords("similar_words.txt", similarWords); // 유사어 파일 로드
 
 	// 사용자 입력
 	std::cout << "동아리 추천 챗봇에 오신 것을 환영합니다! 종료하려면 'exit'을 입력하세요.\n\n";
@@ -316,11 +410,15 @@ int main()
 
 			if (userInput == "exit") break;
 			// 0. 요일 기반 
-			recommendClubsByDay(userInput, dayClubs);              
+			recommendClubsByDay(userInput, dayClubs);
 			// 1. 비용 고려
-			recommendClubsByBudget(userInput, budgetClubs);
+			recommendClubsByBudget(userInput, allClubs);
+
 			// 2. 저녁 시간대 동아리 질문 확인 및 추천
 			checkEveningActivity(userInput, eveningClubs);
+			checkMorningActivity(userInput, morningClubs);
+			checkAfternoonActivity(userInput, afternoonClubs);
+
 
 			// 3. 단어 빈도 분석
 			analyzeUserInput(userInput);
