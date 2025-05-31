@@ -71,8 +71,7 @@ def chat():
             saved_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             uploaded_file.save(saved_path)
             bot_response = f"이미지 '{filename}'이 업로드되었습니다. (분석 기능 없음)"
-            image_path = f"/static/uploads/{filename}"
-
+        
         elif user_input:
             mbti, interest = extract_mbti_and_interest(user_input)
 
