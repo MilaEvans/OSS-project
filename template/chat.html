@@ -1,91 +1,118 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>충북대학교 동아리 추천 CHAT</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+    <meta charset="UTF-8">
+    <title>동아리 추천 챗봇</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
 
-    .chat-area {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-    }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
 
-    .chat-box {
-      border-top: 1px solid #ccc;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
 
-    input[type="text"], input[type="file"] {
-      padding: 10px;
-      font-size: 16px;
-    }
+        .chat-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            background-color: #fafafa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
 
-    input[type="submit"] {
-      padding: 10px;
-      font-size: 16px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-      width: 100%;
-    }
+        .message {
+            margin: 10px 0;
+        }
 
-    input[type="submit"]:hover {
-      background-color: #0056b3;
-    }
+        .message.user {
+            text-align: right;
+            color: #007bff;
+        }
 
-    .message {
-      margin-bottom: 10px;
-    }
+        .message.bot {
+            text-align: left;
+            color: #28a745;
+        }
 
-    .user {
-      text-align: right;
-      color: rgb(0, 102, 255);
-    }
+        .image-preview {
+            text-align: center;
+            margin: 15px 0;
+        }
 
-    .bot {
-      text-align: left;
-      color: rgb(0, 128, 21);
-    }
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+        }
 
-    img {
-      max-width: 300px;
-      margin-top: 10px;
-    }
-  </style>
+        .input-section {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"], input[type="file"] {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button.clear {
+            background-color: #dc3545;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
-  <div class="chat-area">
-    <h2>동아리 추천 챗봇</h2>
+    <div class="container">
+        <h2>동아리 추천 챗봇</h2>
 
-    {% if user_input %}
-      <div class="message user"><strong>당신:</strong> {{ user_input }}</div>
-    {% endif %}
-    {% if bot_response %}
-      <div class="message bot"><strong>챗봇:</strong> {{ bot_response }}</div>
-    {% endif %}
-    {% if image_path %}
-      <img src="{{ image_path }}" alt="추천 이미지">
-    {% endif %}
-  </div>
+        <div class="chat-box">
+            {% for speaker, message in history %}
+                <div class="message {{ speaker }}">{{ message }}</div>
+            {% endfor %}
+        </div>
 
-  <form class="chat-box" method="post" action="/chat" enctype="multipart/form-data">
-    <input type="text" name="keyword" placeholder="키워드를 입력하거나 이미지를 업로드하세요">
-    <input type="file" name="image">
-    <input type="submit" value="전송">
-  </form>
+        <form method="POST" action="/chat" enctype="multipart/form-data">
+            <div class="input-section">
+                <input type="text" name="keyword" placeholder="텍스트 입력 (예: intp, 운동)">
+                <input type="file" name="image">
+            </div>
+            <div class="input-section">
+                <button type="submit">전송</button>
+                <button type="submit" formaction="/clear" formmethod="POST" class="clear">초기화</button>
+            </div>
+        </form>
+    </div>
 </body>
 </html>
