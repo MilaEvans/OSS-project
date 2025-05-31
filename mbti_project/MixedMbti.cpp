@@ -17,16 +17,24 @@ public:
     virtual ~MBTIInfo() = default;
 
     void printInfo(const std::string& mbti) const {
-        std::cout << "\n[MBTI 분석 결과: " << mbti << "]\n";
-        std::cout << "성격 성향: " << personality << "\n";
+        std::cout << "[MBTI 분석 결과: " << mbti << "]\n";
+        std::cout << "당신은 " << personality << " 타입이시군요!\n";
 
-        std::cout << "추천 동아리: ";
-        for (const auto& club : clubTypes) std::cout << club << ", ";
-        std::cout << "\n";
+        std::cout << "이런 성향이라면 ";
+        for (size_t i = 0; i < clubTypes.size(); ++i) {
+            std::cout << clubTypes[i];
+            if (i == clubTypes.size() - 2) std::cout << "나 ";
+            else if (i < clubTypes.size() - 1) std::cout << ", ";
+        }
+        std::cout << " 같은 동아리가 잘 어울릴 것 같아요.\n";
 
-        std::cout << "추천 취미 키워드: ";
-        for (const auto& hobby : hobbies) std::cout << hobby << ", ";
-        std::cout << "\n";
+        std::cout << "취미로는 ";
+        for (size_t i = 0; i < hobbies.size(); ++i) {
+            std::cout << hobbies[i];
+            if (i == hobbies.size() - 2) std::cout << "나 ";
+            else if (i < hobbies.size() - 1) std::cout << ", ";
+        }
+        std::cout << "을 즐겨보는 건 어떠세요?\n";
     }
 };
 
@@ -69,10 +77,9 @@ std::unique_ptr<MBTIInfo> createMBTIInfo(const std::string& mbti) {
         );
     }
 
-    return nullptr; // 사실 이 라인 도달하지 않음(입력 유효성 검사 때문에)
+    return nullptr;
 }
 
-// ===== 유효 MBTI 검사 =====
 const std::set<std::string> validMBTIs = {
     "INTJ", "INTP", "ENTJ", "ENTP",
     "INFJ", "INFP", "ENFJ", "ENFP",
@@ -86,18 +93,6 @@ std::string toUpperCase(const std::string& str) {
     return upperStr;
 }
 
-std::string getValidMBTI() {
-    std::string input;
-    while (true) {
-        std::cout << "당신의 MBTI를 입력하세요 (예: INTJ): ";
-        std::getline(std::cin, input);
-        input = toUpperCase(input);
-        if (validMBTIs.count(input)) return input;
-        std::cout << "잘못된 MBTI입니다. 다시 입력해주세요.\n";
-    }
-}
-
-// ===== main 함수 =====
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cout << "MBTI 입력이 필요합니다.\n";
@@ -115,3 +110,4 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
