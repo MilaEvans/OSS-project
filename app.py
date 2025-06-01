@@ -5,11 +5,9 @@ import re
 
 app = Flask(__name__)
 app.secret_key = 'very_secret_key'
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# C++ 실행파일 경로 (빌드 후 MixBot으로 이름 붙였다고 가정)
-CPP_EXEC = os.path.join(os.path.dirname(__file__),'mbti_project', 'MixBot')
+# C++ 실행파일 경로
+CPP_EXEC = os.path.join(os.path.dirname(__file__), 'mbti_project', 'MixBot')
 
 VALID_MBTI = {
     "INTJ", "INTP", "ENTJ", "ENTP",
@@ -52,7 +50,7 @@ def extract_mbti_and_interest(text):
 def index():
     session.clear()
     session["stage"] = 0
-    session["base_filters"] = []  # MBTI/관심사 + 추가 필터 저장
+    session["base_filters"] = []
     return render_template("chat.html", history=[("bot", "MBTI나 관심사를 입력해주세요!")])
 
 @app.route("/chat", methods=["POST"])
@@ -62,17 +60,17 @@ def chat():
     bot_response = ""
 
     try:
-        # “인기”만 입력된 경우 (stage 0일 때만)
-        if session.get("stage", 0) == 0 and re.search(r"\b인기\b", user_input) and len(user_input.split()) == 1:
+        # “인기”만 입력된 경우 (stage 0에서만)
+        if session.get("stage", 0) == 0 and re.fullmatch(r"인기( 동아리|순위)?", user_input):
             result = subprocess.run(
                 [CPP_EXEC, "인기"],
                 text=True, capture_output=True,
                 encoding='utf-8', errors='replace'
             )
-            if result.returncode != 0:
-                bot_response = f"[오류] {result.stderr.strip() or '원인 불명'}"
-            else:
+            if result.returncode == 0:
                 bot_response = result.stdout.strip()
+            else:
+                bot_response = f"[오류] {result.stderr.strip()}"
             session["history"].append(("user", user_input))
             session["history"].append(("bot", bot_response))
             return render_template("chat.html", history=session["history"])
@@ -87,19 +85,20 @@ def chat():
                 session["base_filters"] = [chosen]
                 session["stage"] = 1
                 bot_response = (
-                    f"좋습니다! '{chosen}'을(를) 기반으로 추가 필터를 입력해주세요.\n"
-                    "예) 시간대: 오전/오후/저녁, 회비: 무료/유료, 요일: 월요일 등\n"
-                    "더 추가 없이 최종 추천을 원하시면 '끝'이라고 입력해 주세요."
+                    f"좋습니다! ‘{chosen}’을(를) 기반으로 추가 필터(시간대/회비/요일/형태)를 입력해주세요.\n"
+                    "예) 오후, 유료, 토요일, 온라인 등\n"
+                    "더 추가 없이 최종 추천을 원하시면 ‘끝’이라고 입력해 주세요."
                 )
             else:
                 bot_response = "MBTI(예: INFP) 또는 관심사(예: 운동, 음악)를 입력해주세요."
+
             session["history"].append(("user", user_input))
             session["history"].append(("bot", bot_response))
             return render_template("chat.html", history=session["history"])
 
         # ─── 단계 1: 추가 필터 입력 ─────────────────────────────────────────
         if stage == 1:
-            # “끝” 입력 시 → 지금까지 누적된 필터로 최종 추천
+            # “끝” 입력 시 → 누적된 필터들로 최종 추천
             if user_input == "끝":
                 combined = " ".join(session["base_filters"])
                 result = subprocess.run(
@@ -107,11 +106,11 @@ def chat():
                     text=True, capture_output=True,
                     encoding='utf-8', errors='replace'
                 )
-                if result.returncode != 0:
-                    bot_response = f"[오류] {result.stderr.strip() or '원인 불명'}"
-                else:
+                if result.returncode == 0:
                     bot_response = result.stdout.strip()
-                # 결과를 보여준 뒤 상태 초기화
+                else:
+                    bot_response = f"[오류] {result.stderr.strip()}"
+                # 결과 출력 후 상태 초기화
                 session["stage"] = 0
                 session["base_filters"] = []
                 session["history"].append(("user", user_input))
@@ -124,9 +123,10 @@ def chat():
                 if syn in lower:
                     user_input = user_input.replace(syn, kw)
 
-            # 지금 상태에서 마지막 필터를 추가하기 전에 기록
+            # 새 필터를 임시 저장
             session["base_filters"].append(user_input)
             combined = " ".join(session["base_filters"])
+
             # C++ 호출
             result = subprocess.run(
                 [CPP_EXEC] + combined.split(),
@@ -136,18 +136,17 @@ def chat():
 
             if result.returncode != 0:
                 bot_response = f"[오류] {result.stderr.strip() or '원인 불명'}"
-                # (이 에러는 일반적으로 없겠지만, C++ 호출 자체 실패 시)
             else:
                 output = result.stdout.strip()
-                # C++에서 “’<필터어>’에 해당되는 동아리가 없습니다. 다시 입력해주세요.” 메시지를 보냈다면
-                if output.find("해당되는 동아리가 없습니다") != -1:
-                    # C++가 출력한 오류 메시지를 그대로 사용자에게 전달
+
+                # “'<필터>'에 해당되는 동아리가 없습니다” 메시지를 포함한다면
+                if "해당되는 동아리가 없습니다" in output:
                     bot_response = output
-                    # 마지막에 append했던 필터어만 제거
+                    # 마지막에 append했던 필터만 제거하여 이전 단계로 복원
                     session["base_filters"].pop()
-                    # stage는 여전히 1 (추가 필터를 다시 받음)
+                    # stage=1 유지 → 다시 필터 입력 받기
                 else:
-                    # “- 동아리이름” 줄만 골라서 목록으로 만듦
+                    # “- 동아리이름” 줄만 골라 목록으로 만듦
                     lines = [ln.strip() for ln in output.splitlines() if ln.startswith("- ")]
                     clubs = [ln[2:] for ln in lines]
 
@@ -155,18 +154,17 @@ def chat():
                         bot_response = (
                             f"현재 조건으로 {len(clubs)}개의 동아리가 있습니다:\n"
                             + "\n".join(f"- {c}" for c in clubs)
-                            + "\n필터를 더 추가하시거나, '끝'이라고 입력하여 최종 추천을 받아보세요."
+                            + "\n필터를 더 추가하시거나, ‘끝’이라고 입력하여 최종 추천을 받아보세요."
                         )
-                        # stage=1 그대로 유지 → 다음 필터를 입력받음
+                        # stage=1 유지 → 다음 필터 입력 대기
                     elif len(clubs) == 1:
                         bot_response = (
                             f"조건에 맞는 동아리가 하나 발견되었습니다:\n- {clubs[0]}\n추천을 마칩니다."
                         )
-                        # 결과가 하나만 남았으므로, 자동으로 stage=0으로 리셋
                         session["stage"] = 0
                         session["base_filters"] = []
                     else:
-                        # newResult empty이면서 prevResult도 empty인 상황
+                        # prevResult도 empty였던 경우
                         bot_response = (
                             "죄송합니다. 조건에 맞는 동아리가 없습니다.\n"
                             "필터를 수정하거나, 다른 MBTI/관심사를 입력해주세요."
@@ -198,7 +196,3 @@ def clear():
     session["stage"] = 0
     session["base_filters"] = []
     return render_template("chat.html", history=[("bot", "MBTI나 관심사를 입력해주세요!")])
-
-
-if __name__ == "__main__":
-    app.run(debug=True)

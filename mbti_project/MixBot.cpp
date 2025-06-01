@@ -1,10 +1,8 @@
-// MixBot.cpp
 #include <iostream>
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
-#include <tuple>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -17,13 +15,12 @@ struct ExtendedClubInfo {
     bool isFree;                       // true: 무료, false: 유료
     std::vector<std::string> days;     // 예: {"월요일", "수요일"}
     std::vector<std::string> times;    // 예: {"오전", "저녁"}
-    std::vector<std::string> mbtiTags; // 예: {"INTJ", "ENTP"} (선택사항)
+    std::vector<std::string> mbtiTags; // 예: {"INFP", "ENFP"} 등
     std::string location;              // "오프라인" 또는 "온라인"
 };
 
 // ─── (2) CSV 파일에서 동아리 정보 로드 ─────────────────────────────────────────
 static std::map<std::string, ExtendedClubInfo> clubData;
-
 void loadClubData(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -86,7 +83,6 @@ void loadClubData(const std::string& filename) {
 
 // ─── (3) 유사어 로드 ───────────────────────────────────────────────────────────
 static std::map<std::string, std::string> similarWords;
-
 void loadSimilarWords(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -107,214 +103,109 @@ void loadSimilarWords(const std::string& filename) {
 
 // ─── (4) 추천 횟수 로드/저장 ───────────────────────────────────────────────────
 static std::map<std::string, int> clubRecommendCount;
-
 void loadRecommendCount(const std::string& filename) {
     std::ifstream file(filename);
-    if (!file.is_open()) {
-        // 파일 없으면 신규 생성 예정
-        return;
-    }
+    if (!file.is_open()) return;
     std::string line;
     while (std::getline(file, line)) {
         std::istringstream iss(line);
-        std::string clubName;
-        int cnt;
-        if (iss >> clubName >> cnt) {
-            clubRecommendCount[clubName] = cnt;
+        std::string name; int cnt;
+        if (iss >> name >> cnt) {
+            clubRecommendCount[name] = cnt;
         }
     }
     file.close();
 }
-
 void saveRecommendCount(const std::string& filename) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "recommend_count.txt 저장 실패\n";
         return;
     }
-    for (const auto& pair : clubRecommendCount) {
-        file << pair.first << " " << pair.second << "\n";
+    for (auto& kv : clubRecommendCount) {
+        file << kv.first << " " << kv.second << "\n";
     }
     file.close();
 }
 
-// ─── (5) MBTI 분석을 위한 기존 코드 ───────────────────────────────────────────
-class MBTIInfoBasic {
-public:
-    std::string personality;
-    std::vector<std::string> clubTypes;
-    std::vector<std::string> hobbies;
-
-    MBTIInfoBasic(const std::string& p,
-                  const std::vector<std::string>& c,
-                  const std::vector<std::string>& h)
-        : personality(p), clubTypes(c), hobbies(h) {}
-
-    void printInfo(const std::string& mbti) const {
-        std::cout << "[MBTI 분석 결과: " << mbti << "]\n";
-        std::cout << "당신은 " << personality << " 타입이시군요!\n";
-        if (!clubTypes.empty()) {
-            std::cout << "이런 성향이라면 다음 동아리들을 추천드려요:\n";
-            for (const auto& club : clubTypes) {
-                std::cout << "- " << club << "\n";
-            }
-        }
-        if (!hobbies.empty()) {
-            std::cout << "취미로는 ";
-            for (size_t i = 0; i < hobbies.size(); ++i) {
-                std::cout << hobbies[i];
-                if (i < hobbies.size() - 1) std::cout << ", ";
-            }
-            std::cout << " 등을 추천드립니다.\n";
-        }
-    }
-};
-
-static const std::map<std::string, std::tuple<
-    std::string,
-    std::vector<std::string>,
-    std::vector<std::string>
->> mbtiData = {
-    { "INTJ", { "논리적이고 전략적인 성향",
-                { "코딩하는친구들", "오픈소스동네", "디버깅모임" },
-                { "독서", "퍼즐" } } },
-    { "INTP", { "탐구적이고 분석적인 성향",
-                { "밤샘코딩", "코드수다방", "게임하러모여" },
-                { "과학", "퍼즐" } } },
-    { "ENTJ", { "계획적이고 리더십 강한 성향",
-                { "함께성장", "꿈꾸는우리", "스킬업" },
-                { "토론", "멘토링" } } },
-    { "ENTP", { "아이디어 넘치는 토론가",
-                { "토론놀이", "연극모임", "즉흥연기" },
-                { "즉흥 연설", "토론" } } },
-    { "INFJ", { "이상주의적 조력자",
-                { "따뜻한마음", "봉사모임", "함께나누기" },
-                { "글쓰기", "상담" } } },
-    { "INFP", { "감성적이고 가치 지향적",
-                { "음악좋아", "소리모아", "사진찍기좋아" },
-                { "글쓰기", "음악 감상" } } },
-    { "ENFJ", { "지도력 있고 배려심 많은 성향",
-                { "봉사모임", "도움의손길", "파티 기획" },
-                { "멘토링", "공연 기획" } } },
-    { "ENFP", { "창의적이고 열정적인 성향",
-                { "멜로디모임", "악기연주회", "영상찍자" },
-                { "여행", "사진" } } },
-    { "ISTJ", { "책임감 강하고 실용적인 성향",
-                { "책읽는시간", "책모임", "한줄토크" },
-                { "가계부 정리", "통계" } } },
-    { "ISFJ", { "헌신적이고 온화한 성향",
-                { "베이킹클럽", "요리해요", "봉사모임" },
-                { "베이킹", "독서" } } },
-    { "ESTJ", { "조직적이고 체계적인 성향",
-                { "행정 동아리", "리더십 동아리", "스킬업" },
-                { "플래너 정리", "스케줄 관리" } } },
-    { "ESFJ", { "사교적이고 배려 깊은 성향",
-                { "환영회 동아리", "학교 행사 기획", "파티 기획" },
-                { "파티 기획", "친목 활동" } } },
-    { "ISTP", { "실용적이고 논리적인 성향",
-                { "기계 동아리", "DIY 동아리", "런닝메이트" },
-                { "조립", "자동차" } } },
-    { "ISFP", { "조용하고 예술적인 성향",
-                { "그림그리기", "사진찍기좋아", "음악좋아" },
-                { "작곡", "그림" } } },
-    { "ESTP", { "모험을 즐기고 활동적인 성향",
-                { "주말농구", "런닝메이트", "즐거운댄스" },
-                { "스포츠", "댄스" } } },
-    { "ESFP", { "외향적이고 낙천적인 성향",
-                { "연극놀이", "공연 동아리", "노래방친구들" },
-                { "노래", "연기" } } }
-};
-
+// ─── (5) MBTI 데이터와 Interest 키워드 ───────────────────────────────────────────
 static const std::set<std::string> validMBTIs = {
     "INTJ","INTP","ENTJ","ENTP",
     "INFJ","INFP","ENFJ","ENFP",
     "ISTJ","ISFJ","ESTJ","ESFJ",
     "ISTP","ISFP","ESTP","ESFP"
 };
-
-std::string toUpperCase(const std::string& str) {
-    std::string upperStr = str;
-    std::transform(
-        upperStr.begin(), upperStr.end(),
-        upperStr.begin(), ::toupper
-    );
-    return upperStr;
-}
-
-// ─── (6) 단순 관심사 키워드 기반 추천 ─────────────────────────────────────────
 static const std::map<std::string, std::vector<std::string>> interestKeywords = {
-    { "운동",     {"땀흘리기","운동하자","뛰뛰빵빵","런닝메이트","주말농구"} },
-    { "예술",     {"그림그리기","낙서모임","아트타임","색칠놀이","손그림모임"} },
-    { "음악",     {"음악좋아","노래방친구들","멜로디모임","악기연주회","소리모아"} },
-    { "봉사",     {"도움의손길","함께나누기","따뜻한마음","봉사모임","기쁨나누기"} },
-    { "토론",     {"토론놀이","연극모임","즉흥연기"} },
-    { "IT",       {"코딩하는친구들","밤샘코딩","코드수다방","오픈소스동네","디버깅모임"} },
-    { "창업",     {"함께성장","작은도전","꿈꾸는우리","스킬업","자기관리"} },
-    { "문학",     {"책읽는시간","책모임","한줄토크","읽고싶은책","독서친구"} },
-    { "댄스",     {"춤추는우리","리듬따라","뽐내기댄스","비트속으로","즐거운댄스"} },
-    { "게임",     {"게임하러모여","보드게임존","게임친구들","온라인모험단","게임톡"} },
-    { "여행",     {"여행가자","떠나볼까","길따라걷기","캠핑가족","바람따라"} },
-    { "사진",     {"찰칵찰칱","사진찍기좋아","풍경사진","우리사진관","사진산책"} },
-    { "영상",     {"영상찍자","영상편집모임","필름러버","우리영상","유튜브친구들"} },
-    { "미술",     {"그림그리기","낙서모임","아트타임","색칠놀이","손그림모임"} },
-    { "연극",     {"연극놀이","무대연습","연기하는우리","즉흥연기","연극모임"} },
-    { "요리",     {"요리해요","간식만들기","베이킹클럽","맛있는시간","요리친구들"} }
+    { "운동", {"땀흘리기","운동하자","뛰뛰빵빵","런닝메이트","주말농구"} },
+    { "예술", {"그림그리기","낙서모임","아트타임","색칠놀이","손그림모임"} },
+    { "음악", {"음악좋아","노래방친구들","멜로디모임","악기연주회","소리모아"} },
+    { "봉사", {"도움의손길","함께나누기","따뜻한마음","봉사모임","기쁨나누기"} },
+    { "토론", {"토론놀이","연극모임","즉흥연기"} },
+    { "IT", {"코딩하는친구들","밤샘코딩","코드수다방","오픈소스동네","디버깅모임"} },
+    { "창업", {"함께성장","작은도전","꿈꾸는우리","스킬업","자기관리"} },
+    { "문학", {"책읽는시간","책모임","한줄토크","읽고싶은책","독서친구"} },
+    { "댄스", {"춤추는우리","리듬따라","뽐내기댄스","비트속으로","즐거운댄스"} },
+    { "게임", {"게임하러모여","보드게임존","게임친구들","온라인모험단","게임톡"} },
+    { "여행", {"여행가자","떠나볼까","길따라걷기","캠핑가족","바람따라"} },
+    { "사진", {"찰칵찰칱","사진찍기좋아","풍경사진","우리사진관","사진산책"} },
+    { "영상", {"영상찍자","영상편집모임","필름러버","우리영상","유튜브친구들"} },
+    { "미술", {"그림그리기","낙서모임","아트타임","색칠놀이","손그림모임"} },
+    { "연극", {"연극놀이","무대연습","연기하는우리","즉흥연기","연극모임"} },
+    { "요리", {"요리해요","간식만들기","베이킹클럽","맛있는시간","요리친구들"} }
 };
 
-// ─── (7) RecommendEngine 관련 데이터 및 함수 ───────────────────────────────────────
-
-// 시간대, 요일 상수
-static const std::vector<std::string> timeSlots = { "오전", "오후", "저녁" };
-static const std::vector<std::string> days = {
+// ─── (6) 필터링 함수: “rawInput” 문자열을 받아, CSV+유사어+키워드 기반으로 동아리 목록 반환 ─────
+static const std::vector<std::string> allDays = {
     "월요일","화요일","수요일","목요일","금요일","토요일","일요일"
 };
+static const std::vector<std::string> allTimes = { "오전","오후","저녁" };
 
-// (A) rawInput 한 번에 받아서 필터링한 결과만 리턴하는 헬퍼 함수
-std::vector<std::string> filterClubs(const std::string& rawInput,
-                                     const std::map<std::string, std::vector<std::string>>& keywordMap,
-                                     const std::map<std::string, std::string>& similarWords,
-                                     const std::map<std::string, std::vector<std::string>>& dayClubs,
-                                     const std::vector<std::string>& allClubs,
-                                     const std::vector<std::string>& offlineClubs,
-                                     const std::vector<std::string>& onlineClubs,
-                                     const std::vector<std::string>& morningClubs,
-                                     const std::vector<std::string>& afternoonClubs,
-                                     const std::vector<std::string>& eveningClubs) 
+std::vector<std::string> filterClubs(
+        const std::string& rawInput,
+        const std::map<std::string, std::vector<std::string>>& keywordMap,
+        const std::map<std::string, std::string>& similarWords,
+        const std::vector<std::string>& allClubs)
 {
-    // (1) 유사어 치환 & 소문자화
+    // 1) 유사어 대체 & 소문자화
     std::string inputLower = rawInput;
     std::transform(inputLower.begin(), inputLower.end(), inputLower.begin(), ::tolower);
-    for (const auto& pair : similarWords) {
-        if (inputLower.find(pair.first) != std::string::npos) {
-            inputLower = std::regex_replace(inputLower, std::regex(pair.first), pair.second);
+    for (auto& kv : similarWords) {
+        const std::string& syn = kv.first;
+        const std::string& kw  = kv.second;
+        if (inputLower.find(syn) != std::string::npos) {
+            inputLower = std::regex_replace(inputLower, std::regex(syn), kw);
         }
     }
 
-    // (2) 필터 변수들
+    // 2) 필터 변수 초기화
     bool wantFree = false, wantPaid = false;
     bool wantOffline = false, wantOnline = false;
-    std::string selectedDay = "", selectedTime = "";
-    std::vector<std::string> matchedKeywords;
-    std::string upper = toUpperCase(rawInput);
-    bool mbtiMentionFound = false;
+    std::string selectedDay = "";
+    std::string selectedTime = "";
+    std::vector<std::string> matchedKeywords; 
+    std::string upperRaw = rawInput;
+    std::transform(upperRaw.begin(), upperRaw.end(), upperRaw.begin(), ::toupper);
 
-    // (3) MBTI 태그 검사
-    for (const auto& mbti : validMBTIs) {
-        if (upper.find(mbti) != std::string::npos) {
+    // 3) MBTI 태그 검사
+    bool mbtiMentionFound = false;
+    for (auto& m : validMBTIs) {
+        if (upperRaw.find(m) != std::string::npos) {
             mbtiMentionFound = true;
             break;
         }
     }
 
-    // (4) 요일 검사
-    for (const auto& day : days) {
-        if (inputLower.find(day) != std::string::npos) {
-            selectedDay = day;
+    // 4) 요일 검사
+    for (auto& d : allDays) {
+        std::string d_lower = d;
+        std::transform(d_lower.begin(), d_lower.end(), d_lower.begin(), ::tolower);
+        if (inputLower.find(d_lower) != std::string::npos) {
+            selectedDay = d;
             break;
         }
     }
 
-    // (5) 시간대 검사
+    // 5) 시간대 검사
     if (inputLower.find("오전") != std::string::npos || inputLower.find("아침") != std::string::npos) {
         selectedTime = "오전";
     }
@@ -325,22 +216,24 @@ std::vector<std::string> filterClubs(const std::string& rawInput,
         selectedTime = "저녁";
     }
 
-    // (6) 회비 검사
+    // 6) 회비 검사
     if (inputLower.find("무료") != std::string::npos ||
         inputLower.find("저렴") != std::string::npos ||
         inputLower.find("싸다") != std::string::npos ||
         inputLower.find("비용 없다") != std::string::npos ||
-        inputLower.find("공짜") != std::string::npos) {
+        inputLower.find("공짜") != std::string::npos)
+    {
         wantFree = true;
     }
-    if (inputLower.find("비싸다") != std::string::npos ||
-        inputLower.find("유료") != std::string::npos ||
+    if (inputLower.find("유료") != std::string::npos ||
+        inputLower.find("비싸다") != std::string::npos ||
         inputLower.find("비용 있다") != std::string::npos ||
-        inputLower.find("고급") != std::string::npos) {
+        inputLower.find("고급") != std::string::npos)
+    {
         wantPaid = true;
     }
 
-    // (7) 형태(온/오프라인) 검사
+    // 7) 형태(온라인/오프라인) 검사
     if (inputLower.find("오프라인") != std::string::npos) {
         wantOffline = true;
     }
@@ -348,85 +241,88 @@ std::vector<std::string> filterClubs(const std::string& rawInput,
         wantOnline = true;
     }
 
-    // (8) 관심사 키워드 매칭
-    for (const auto& token : keywordMap) {
-        const std::string& key = token.first;
-        if (inputLower.find(key) != std::string::npos) {
+    // 8) 관심 키워드 매칭
+    for (auto& kv : keywordMap) {
+        const std::string& key = kv.first;           // 예: "운동", "음악" 등
+        std::string key_lower = key;
+        std::transform(key_lower.begin(), key_lower.end(), key_lower.begin(), ::tolower);
+        if (inputLower.find(key_lower) != std::string::npos) {
             matchedKeywords.push_back(key);
         }
     }
 
-    // (9) 실제 필터링 수행
-    std::vector<std::string> filteredClubs;
-    for (const auto& club : allClubs) {
-        const auto& info = clubData.at(club);
+    // 9) 실제 필터링 수행
+    std::vector<std::string> filtered;
+    for (auto& clubName : allClubs) {
+        const auto& info = clubData.at(clubName);
 
-        // (1) 관심 키워드 매칭 : matchedKeywords 비어있지 않으면 반드시 한 개 이상 포함
+        // (1) 관심 키워드 매칭: matchedKeywords 비어 있지 않으면, 반드시 그 그룹에 속해야 함
         if (!matchedKeywords.empty()) {
-            bool keywordMatch = false;
-            for (const auto& kw : matchedKeywords) {
-                const auto& clubsForKw = keywordMap.at(kw);
-                if (std::find(clubsForKw.begin(), clubsForKw.end(), club) != clubsForKw.end()) {
-                    keywordMatch = true;
+            bool ok = false;
+            for (auto& key : matchedKeywords) {
+                auto& group = keywordMap.at(key);
+                if (std::find(group.begin(), group.end(), clubName) != group.end()) {
+                    ok = true;
                     break;
                 }
             }
-            if (!keywordMatch) continue;
+            if (!ok) continue;
         }
 
-        // (2) 요일 체크
+        // (2) 요일 검사
         if (!selectedDay.empty()) {
             if (std::find(info.days.begin(), info.days.end(), selectedDay) == info.days.end()) {
                 continue;
             }
         }
 
-        // (3) 시간대 체크
+        // (3) 시간대 검사
         if (!selectedTime.empty()) {
             if (std::find(info.times.begin(), info.times.end(), selectedTime) == info.times.end()) {
                 continue;
             }
         }
 
-        // (4) 회비 체크
+        // (4) 회비 검사
         if (wantFree && !info.isFree) continue;
         if (wantPaid && info.isFree) continue;
 
-        // (5) 형태 체크
+        // (5) 형태 검사
         if (wantOffline && info.location != "오프라인") continue;
         if (wantOnline && info.location != "온라인") continue;
 
-        // (6) MBTI 태그 체크
+        // (6) MBTI 태그 검사
         if (mbtiMentionFound) {
-            bool mbtiMatched = false;
-            for (const auto& tag : info.mbtiTags) {
-                if (upper.find(tag) != std::string::npos) {
-                    mbtiMatched = true;
+            bool ok = false;
+            for (auto& tag : info.mbtiTags) {
+                if (upperRaw.find(tag) != std::string::npos) {
+                    ok = true;
                     break;
                 }
             }
-            if (!mbtiMatched) continue;
+            if (!ok) continue;
         }
 
-        // 최종 통과
-        filteredClubs.push_back(club);
+        filtered.push_back(clubName);
     }
 
-    return filteredClubs;
+    return filtered;
 }
 
-// ─── (10) “인기 동아리” 처리 (전체 or 컨텍스트별) ─────────────────────────────────
+// ─── (7) “인기 동아리” 처리 (전체 or 컨텍스트별) ─────────────────────────────────
 std::string readContextualPopular(const std::string& context) {
-    if (!std::ifstream("recommend_count.txt")) {
+    std::ifstream check("recommend_count.txt");
+    if (!check.is_open()) {
         return "아직 추천된 정보가 없습니다.";
     }
-    std::map<std::string, int> counts;
+    check.close();
+
+    std::map<std::string,int> counts;
     std::ifstream in("recommend_count.txt");
     std::string line;
     while (std::getline(in, line)) {
         std::istringstream iss(line);
-        std::string clubName;
-        int cnt;
+        std::string clubName; int cnt;
         if (iss >> clubName >> cnt) {
             counts[clubName] = cnt;
         }
@@ -436,33 +332,33 @@ std::string readContextualPopular(const std::string& context) {
     std::vector<std::pair<std::string,int>> filtered;
     bool isMBTI = (validMBTIs.count(context) > 0);
     if (isMBTI) {
-        // MBTI 태그 기반 필터
-        for (const auto& pair : counts) {
-            const auto& clubName = pair.first;
-            const auto& cnt = pair.second;
-            const auto& tags = clubData[clubName].mbtiTags;
+        for (auto& kv : counts) {
+            auto& clubName = kv.first;
+            int cnt = kv.second;
+            auto& tags = clubData[clubName].mbtiTags;
             if (std::find(tags.begin(), tags.end(), context) != tags.end()) {
                 filtered.emplace_back(clubName, cnt);
             }
         }
-    } else {
-        // 관심사 기반
+    } 
+    else {
+        // 관심사 컨텍스트
         auto it = interestKeywords.find(context);
         if (it != interestKeywords.end()) {
-            const auto& clubsForKw = it->second;
-            for (const auto& clubName : clubsForKw) {
-                if (counts.count(clubName)) {
-                    filtered.emplace_back(clubName, counts[clubName]);
+            for (auto& cn : it->second) {
+                if (counts.count(cn)) {
+                    filtered.emplace_back(cn, counts[cn]);
                 }
             }
         }
-        for (const auto& pair : similarWords) {
-            if (pair.second == context) {
-                auto it2 = interestKeywords.find(pair.second);
+        // + 유사어 맵핑
+        for (auto& kv : similarWords) {
+            if (kv.second == context) {
+                auto it2 = interestKeywords.find(kv.second);
                 if (it2 != interestKeywords.end()) {
-                    for (const auto& clubName : it2->second) {
-                        if (counts.count(clubName)) {
-                            filtered.emplace_back(clubName, counts[clubName]);
+                    for (auto& cn : it2->second) {
+                        if (counts.count(cn)) {
+                            filtered.emplace_back(cn, counts[cn]);
                         }
                     }
                 }
@@ -476,38 +372,37 @@ std::string readContextualPopular(const std::string& context) {
     }
     std::sort(filtered.begin(), filtered.end(),
               [](auto& a, auto& b){ return a.second > b.second; });
-
     std::ostringstream oss;
     oss << "[\"" << context << "\" 관련 인기 동아리 순위]\n";
     int rank = 1;
-    for (const auto& entry : filtered) {
+    for (auto& entry : filtered) {
         oss << rank++ << "위: " << entry.first << " (" << entry.second << "회 추천됨)\n";
     }
     return oss.str();
 }
 
-// ─── (11) 최종 main ─────────────────────────────────────────────
+// ─── (8) 최종 main ─────────────────────────────────────────────
 int main(int argc, char* argv[]) {
     loadClubData("club_data.csv");
     loadSimilarWords("similar_words.txt");
     loadRecommendCount("recommend_count.txt");
 
-    // 인자가 없으면 안내문 출력
     if (argc < 2) {
         std::cout << "필터를 입력해주세요.\n";
         return 0;
     }
 
-    // argv[1..n] 을 한 문자열로 합치기
-    std::string userInput = argv[1];
-    for (int i = 2; i < argc; ++i) {
-        userInput += " ";
-        userInput += argv[i];
+    // argv[1..]을 tokens 벡터에 복사
+    std::vector<std::string> tokens;
+    for (int i = 1; i < argc; ++i) {
+        tokens.push_back(argv[i]);
     }
 
     // “인기”만 입력된 경우
-    if (argc == 2 && (userInput == "인기" || userInput == "인기 동아리" || userInput == "인기순위")) {
-        // 전체 인기
+    if (tokens.size() == 1 &&
+        (tokens[0] == "인기" || tokens[0] == "인기 동아리" || tokens[0] == "인기순위"))
+    {
+        // 전체 인기 순위
         std::map<std::string,int> counts;
         std::ifstream in("recommend_count.txt");
         if (!in.is_open()) {
@@ -517,8 +412,7 @@ int main(int argc, char* argv[]) {
         std::string line;
         while (std::getline(in, line)) {
             std::istringstream iss(line);
-            std::string clubName;
-            int cnt;
+            std::string clubName; int cnt;
             if (iss >> clubName >> cnt) {
                 counts[clubName] = cnt;
             }
@@ -528,8 +422,9 @@ int main(int argc, char* argv[]) {
             return 0;
         }
         std::vector<std::pair<std::string,int>> sorted;
-        for (auto& p : counts) sorted.push_back(p);
-        std::sort(sorted.begin(), sorted.end(), [](auto& a, auto& b){ return a.second > b.second; });
+        for (auto& kv : counts) sorted.emplace_back(kv.first, kv.second);
+        std::sort(sorted.begin(), sorted.end(),
+                  [](auto& a, auto& b){ return a.second > b.second; });
         std::cout << "[전체 인기 동아리 순위]\n";
         int rank = 1;
         for (auto& entry : sorted) {
@@ -538,112 +433,79 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    // “<컨텍스트> 인기” 형태 (예: “운동 인기”, “INFP 인기”)
-    // 첫 번째 토큰을 context로 보고, 뒤에 “인기”만 있으면 해당 context 인기 출력
-    if (argc == 3 && (std::string(argv[2]) == "인기" || std::string(argv[2]) == "인기동아리" || std::string(argv[2]) == "인기순위")) {
-        std::string context = argv[1];
+    // “<컨텍스트> 인기” 형태
+    if (tokens.size() == 2 &&
+        (tokens[1] == "인기" || tokens[1] == "인기동아리" || tokens[1] == "인기순위"))
+    {
+        std::string context = tokens[0];
         std::cout << readContextualPopular(context);
         return 0;
     }
 
-    // 그 외: 다중 필터링 (MBTI or 관심사 → 추가 필터 순서)
-    // 만약 인자가 하나만 왔는데 “INFP”나 “운동” 같은 형태라면 → filterClubs 결과 출력
-    // 만약 인자가 2개 이상이라면 “이전 누적” vs “새 누적” 비교
-    std::vector<std::string> allClubs, offlineClubs, onlineClubs;
-    std::vector<std::string> morningClubs, afternoonClubs, eveningClubs;
-    std::map<std::string, std::vector<std::string>> dayClubs;
-    std::map<std::string, std::vector<std::string>> keywordMap;
-    for (const auto& pair : interestKeywords) {
-        keywordMap[pair.first] = pair.second;
-    }
-    for (const auto& pair : clubData) {
-        const auto& info = pair.second;
-        allClubs.push_back(info.name);
-        for (const auto& d : info.days) dayClubs[d].push_back(info.name);
-        for (const auto& t : info.times) {
-            if (t == "오전") morningClubs.push_back(info.name);
-            else if (t == "오후") afternoonClubs.push_back(info.name);
-            else if (t == "저녁") eveningClubs.push_back(info.name);
-        }
-        if (info.location == "오프라인") offlineClubs.push_back(info.name);
-        else onlineClubs.push_back(info.name);
-    }
-
-    // argv[1..n]을 토큰별로 분리한 벡터
-    std::vector<std::string> tokens;
-    for (int i = 1; i < argc; ++i) {
-        tokens.push_back(argv[i]);
-    }
-
-    // === (1) 인자가 하나만 왔을 때 ===
+    // ─── 단계별 누적 필터링 ─────────────────────────────────────────────
+    // (1) tokens.size()==1: 첫 필터 입력만 있을 때
     if (tokens.size() == 1) {
-        // interestKeywords나 MBTI 태그 중 하나일 수 있다
-        std::string single = tokens[0];
+        std::string only = tokens[0];
+        // “MBTI”이거나 “관심사”이든 상관없이, filterClubs로 걸러줌
+        std::vector<std::string> allClubs;
+        for (auto& kv : clubData) allClubs.push_back(kv.first);
+
         std::vector<std::string> result = filterClubs(
-            single,
-            keywordMap, similarWords,
-            dayClubs, allClubs,
-            offlineClubs, onlineClubs,
-            morningClubs, afternoonClubs, eveningClubs
+            only,
+            interestKeywords, similarWords,
+            allClubs
         );
         if (result.empty()) {
-            std::cout << "'" << single << "'에 해당되는 동아리가 없습니다. 다시 입력해주세요.\n";
+            std::cout << "'" << only << "'에 해당되는 동아리가 없습니다. 다시 입력해주세요.\n";
             return 0;
         }
-        // 결과 출력 + 카운트 저장
-        std::cout << "\n[종합 추천 결과]\n";
-        for (const auto& club : result) {
-            std::cout << "- " << club << "\n";
-            clubRecommendCount[club]++;
+        std::cout << "\n[단계 1: '" << only << "' 기반 추천]\n";
+        for (auto& cname : result) {
+            std::cout << "- " << cname << "\n";
+            clubRecommendCount[cname]++;
         }
         std::cout << "\n";
         saveRecommendCount("recommend_count.txt");
         return 0;
     }
 
-    // === (2) 인자가 2개 이상 (누적 필터) ===
-    // (A) prevInput = argv[1..n-1]
+    // (2) tokens.size() >= 2: “prevInput” = tokens[0..n-2], “lastFilter” = tokens[n-1]
     std::string prevInput = tokens[0];
-    for (size_t i = 1; i < tokens.size()-1; ++i) {
+    for (size_t i = 1; i < tokens.size() - 1; ++i) {
         prevInput += " " + tokens[i];
     }
-    // (B) newInput = argv[1..n]
-    std::string newInput = prevInput + " " + tokens.back();
     std::string lastFilter = tokens.back();
+    std::string newInput = prevInput + " " + lastFilter;
 
-    // (C) prevFilter 결과, newFilter 결과
-    std::vector<std::string> prevResult = filterClubs(
-        prevInput,
-        keywordMap, similarWords,
-        dayClubs, allClubs,
-        offlineClubs, onlineClubs,
-        morningClubs, afternoonClubs, eveningClubs
-    );
-    std::vector<std::string> newResult = filterClubs(
-        newInput,
-        keywordMap, similarWords,
-        dayClubs, allClubs,
-        offlineClubs, onlineClubs,
-        morningClubs, afternoonClubs, eveningClubs
-    );
+    // 모든 동아리 목록 준비
+    std::vector<std::string> allClubs;
+    for (auto& kv : clubData) allClubs.push_back(kv.first);
 
-    // (D) “이전에는 후보가 있었는데, 새 필터를 추가하니 후보가 0개가 된 경우” → 오류 메시지
+    // (A) prevResult = filterClubs(prevInput)
+    std::vector<std::string> prevResult =
+        filterClubs(prevInput, interestKeywords, similarWords, allClubs);
+
+    // (B) newResult = filterClubs(newInput)
+    std::vector<std::string> newResult =
+        filterClubs(newInput, interestKeywords, similarWords, allClubs);
+
+    // (C) “이전 결과(prevResult)는 있었는데, 새 필터(newResult)는 0개인 경우”
     if (!prevResult.empty() && newResult.empty()) {
         std::cout << "'" << lastFilter << "'에 해당되는 동아리가 없습니다. 다시 입력해주세요.\n";
         return 0;
     }
 
-    // (E) 그 외: newResult 결과를 출력 + 카운트 저장
+    // (D) “newResult도 비어 있고 prevResult도 비어 있었던 경우”
     if (newResult.empty()) {
-        // (이전결과도 비어있었다면) → “모든 후보가 없을 때”
         std::cout << "조건에 맞는 동아리가 없습니다. 다시 입력해주세요.\n";
         return 0;
     }
 
-    std::cout << "\n[종합 추천 결과]\n";
-    for (const auto& club : newResult) {
-        std::cout << "- " << club << "\n";
-        clubRecommendCount[club]++;
+    // (E) 정상적으로 좁혀진 결과가 있는 경우
+    std::cout << "\n[종합 추천 결과: '" << newInput << "']\n";
+    for (auto& cname : newResult) {
+        std::cout << "- " << cname << "\n";
+        clubRecommendCount[cname]++;
     }
     std::cout << "\n";
     saveRecommendCount("recommend_count.txt");
