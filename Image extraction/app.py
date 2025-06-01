@@ -271,5 +271,20 @@ def club_detail(club_name):
                            category=club.get("category", ""),
                            datetime=datetime)
 
+@app.route('/apply/<club_name>', methods=['GET', 'POST'])
+def apply_club(club_name):
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        motivation = request.form.get('motivation')
+        
+        # 여기에 저장/이메일 전송/DB 연동 등 처리 로직 추가 가능
+        print(f"[신청] 이름: {name}, 이메일: {email}, 동기: {motivation}, 동아리: {club_name}")
+
+        return render_template('apply_success.html', club_name=club_name, name=name)
+    
+    return render_template('apply_form.html', club_name=club_name)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
