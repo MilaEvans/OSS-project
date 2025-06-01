@@ -20,33 +20,151 @@ def nl2br_filter(s):
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 clubs_info = {
-    "COSMIC": {
-        "description": "컴퓨터공학과 동아리",
-        "introduction": "COSMIC은 ",
+    # 코딩
+    "코딩하는친구들": {
+        "description": "코딩 동아리",
+        "introduction": "코딩하는친구들은 ",
         "schedule": [
             "5-7 매주 수요일 오후 6시 ~ 8시",
         ],
         "category": "프로그래밍",
-        "members": 30
+        "members": 30,
+        "tags": ["오전", "회비 필요", "월요일", "온라인"],
     },
-    "CaTs": {
-        "description": "컴퓨터공학과 동아리",
-        "introduction": "CaTs는",
+    "밤샘코딩": {
+        "description": "코딩 동아리",
+        "introduction": "밤샘코딩은",
         "schedule": [
             "5-6 매주 화요일 오후 7시 ~ 9시",
         ],
         "category": "게임 개발",
-        "members": 20
+        "members": 20,
     },
-    "CERT": {
-        "description": "컴퓨터공학과 동아리",
-        "introduction": "CERT는 ",
+    "코드수다방": {
+        "description": "코딩 동아리",
+        "introduction": "코드수다방은 ",
         "schedule": [
             "5-9 매주 금요일 오후 5시 ~ 7시",
         ],
         "category": "보안",
-        "members": 15
-    }
+        "members": 15,
+    },
+    "오픈소스동네": {
+        "description": "코딩 동아리",
+        "introduction": "오픈소스동네 동아리는 ",
+        "schedule": [
+            "5-9 매주 금요일 오후 5시 ~ 7시",
+        ],
+        "category": "보안",
+        "members": 15,
+    },
+    "디버깅모임": {
+        "description": "코딩 동아리",
+        "introduction": "디버깅모임 동아리는 ",
+        "schedule": [
+            "5-9 매주 금요일 오후 5시 ~ 7시",
+        ],
+        "category": "보안",
+        "members": 15,
+    },
+
+    # 운동
+    
+    "땀흘리기": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+    "운동하자": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+    "뛰뛰빵빵": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+    "런닝메이트": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+    "주말농구": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+
+    # 댄스
+    
+    "춤추는우리": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+    "리듬따라": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+    "뽐내기댄스": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+    "비트속으로": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+    "즐거운댄스": {
+        "description": "운동 동아리",
+        "introduction": "땀흘리기 동아리는",
+        "schedule": [
+            "5-6 매주 화요일 오후 7시 ~ 9시",
+        ],
+        "category": "헬스",
+        "members": 20,
+    },
+
+                    
 }
 
 @app.route('/uploads/<filename>')
@@ -118,7 +236,7 @@ def index():
                         "name": name,
                         "description": clubs_info[name]["description"],
                         "icon": icon_map.get(name, "star"),
-                        "tags": ["추천"]
+                        "tags": clubs_info[name].get("tags", [])
                     })
 
         return render_template('result.html',
