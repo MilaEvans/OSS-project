@@ -410,6 +410,18 @@ void recommendClubsByCombinedConditions(
 	if (lowered.find("비싸다") != std::string::npos || lowered.find("유료") != std::string::npos || lowered.find("비용 있다") != std::string::npos || lowered.find("고급") != std::string::npos)
 		wantPaid = true;
 
+	// 온 / 오프라인
+	wantOffline = (lowered.find("오프라인") != std::string::npos);
+	wantOnline = (lowered.find("온라인") != std::string::npos);
+
+	// 요일 조건 파악
+	for (const auto& day : days) {
+		if (userInput.find(day) != std::string::npos) {
+			selectedDay = day;
+			break;
+		}
+	}
+
 
 int main()
 {
