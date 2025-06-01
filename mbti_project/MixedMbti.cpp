@@ -98,9 +98,18 @@ std::string getValidMBTI() {
 }
 
 // ===== main 함수 =====
-int main() {
-    std::cout << "=== 동아리 추천 챗봇 ===\n";
-    std::string mbti = getValidMBTI();
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        std::cout << "MBTI 입력이 필요합니다.\n";
+        return 1;
+    }
+
+    std::string mbti = toUpperCase(argv[1]);
+    if (!validMBTIs.count(mbti)) {
+        std::cout << "잘못된 MBTI입니다.\n";
+        return 1;
+    }
+
     auto info = createMBTIInfo(mbti);
     info->printInfo(mbti);
 
