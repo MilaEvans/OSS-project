@@ -198,3 +198,7 @@ def clear():
     session["stage"] = 0
     session["base_filters"] = []
     return render_template("chat.html", history=[("bot", "MBTI나 관심사를 입력해주세요!")])
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
