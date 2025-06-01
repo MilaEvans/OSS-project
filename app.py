@@ -31,7 +31,6 @@ INTEREST_KEYWORDS = {
 }
 
 def extract_mbti_and_interest(text):
-    # 텍스트에서 MBTI(대문자)와 관심사 카테고리를 추출합니다.
     t = text.lower()
     t = re.sub(r"[은는이가요의을를]", " ", t)
 
@@ -109,7 +108,6 @@ def chat():
                 elif interest == "문학":
                     bot_response += "\n문학 관련 추천: 문학 동아리, 창작 동아리"
 
-                # C++ 실행 연동 (interest_recommender)
                 try:
                     interest_exe = os.path.join(os.path.dirname(__file__), "interest", "interest_recommender")
                     interest_result = subprocess.run(
@@ -126,7 +124,6 @@ def chat():
                         bot_response += "\n\n[추천 결과 없음 또는 오류]"
                 except Exception as e:
                     bot_response += f"\n\n[추천 오류] {str(e)}"
-
             else:
                 if not mbti:
                     bot_response = "지원되지 않는 키워드입니다. 예: infp, 운동, 예술, 음악, IT, 봉사, 토론, 창업, 문학"
@@ -148,6 +145,10 @@ def chat():
 def clear():
     session.pop("history", None)
     return render_template("chat.html", history=[])
+##파일 이름 미정
+@app.route("/other")
+def other_page():
+    return render_template("other.html")
 
 if __name__ == "__main__":
     print("✅ Flask 서버 시작 중... http://127.0.0.1:5000")
