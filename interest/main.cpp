@@ -36,7 +36,6 @@ std::map<std::string, int> wordFrequency;
 // 인기 동아리 추천 횟수 저장용
 std::map<std::string, int> clubRecommendCount;
 
-
 // 예산/비용 관련 동아리 추천
 void recommendClubsByBudget(const std::string& userInput, const std::vector<std::string>& allClubs) {
 	std::string lowered = userInput;
@@ -87,9 +86,7 @@ void recommendClubsByBudget(const std::string& userInput, const std::vector<std:
 	}
 }
 
-void recommendByLocation(const std::string& userInput,
-	const std::vector<std::string>& offlineClubs,
-	const std::vector<std::string>& onlineClubs) {
+void recommendByLocation(const std::string& userInput, const std::vector<std::string>& offlineClubs, const std::vector<std::string>& onlineClubs) {
 	std::string lowered = userInput;
 	std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
 
@@ -265,9 +262,7 @@ void printPopularClubs()
 }
 
 // 키워드 및 유사어 기반 추천 로직 함수
-void processInterestInput(const std::string& userInput,
-	const std::map<std::string, std::vector<std::string>>& keywordMap,
-	const std::map<std::string, std::string>& similarWords)
+void processInterestInput(const std::string& userInput,	const std::map<std::string, std::vector<std::string>>& keywordMap, const std::map<std::string, std::string>& similarWords)
 {
 	bool isCurrentMatched = false;
 	bool anyMatchFound = false;
@@ -422,7 +417,97 @@ void recommendClubsByCombinedConditions(
 		}
 	}
 
+	// 시간대 조건 파악
+	if (lowered.find("오전") != std::string::npos || lowered.find("아침") != std::string::npos)
+		selectedTime = "오전";
+	else if (lowered.find("오후") != std::string::npos || lowered.find("점심") != std::string::npos)
+		selectedTime = "오후";
+	else if (lowered.find("저녁") != std::string::npos || lowered.find("밤") != std::string::npos)
+		selectedTime = "저녁";
 
+	// 관심 키워드 파악 (직접 키워드 + 유사어 포함)
+	for (const auto& token : keywordMap)
+	{
+		const std::string& key = token.first;
+		bool isMatch = false;
+
+		if (userInput.find(key) != std::string::npos)
+			isMatch = true;
+		else
+		{
+			for (const auto& pair : similarWords)
+			{
+				if (isKeywordMatch(userInput, pair.first, pair.second, key))
+				{
+					isMatch = true;
+					break;
+				}
+			}
+		}
+
+		if (isMatch) matchedKeywords.push_back(key);
+	}
+
+	// 필터링 조건에 맞는 동아리 결과 저장
+	std::vector<std::string> filteredClubs;
+
+	for (const auto& club : allClubs)
+	{
+		ClubInfo info = generateFixedInfo(club);
+
+		// 1) 관심 키워드 체크: 적어도 한 키워드가 포함된 동아리여야 함
+		bool keywordMatch = matchedKeywords.empty(); // 키워드가 없으면 무조건 통과
+		if (!matchedKeywords.empty())
+		{
+			for (const auto& kw : matchedKeywords)
+			{
+				const auto& clubsForKw = keywordMap.at(kw);
+				if (std::find(clubsForKw.begin(), clubsForKw.end(), club) != clubsForKw.end())
+				{
+					keywordMatch = true;
+					break;
+				}
+			}
+		}
+		if (!keywordMatch) continue;
+
+		// 2) 요일 체크
+		if (!selectedDay.empty())
+		{
+			if (dayClubs.find(selectedDay) == dayClubs.end()) continue;
+			if (std::find(dayClubs.at(selectedDay).begin(), dayClubs.at(selectedDay).end(), club) == dayClubs.at(selectedDay).end())
+				continue;
+		}
+
+		// 3) 시간대 체크
+		if (!selectedTime.empty() && info.time != selectedTime)
+			continue;
+
+		// 4) 비용 체크
+		if (wantFree && info.hasFee) continue; // 무료 원하지만 유료면 제외
+		if (wantPaid && !info.hasFee) continue; // 유료 원하지만 무료면 제외
+
+		// 5) 위치 체크
+		if (wantOffline && info.location != "오프라인") continue;
+		if (wantOnline && info.location != "온라인") continue;
+
+		filteredClubs.push_back(club);
+	}
+
+	// 결과 출력
+	if (filteredClubs.empty()) {
+		std::cout << "조건에 맞는 동아리를 찾을 수 없습니다.\n";
+		return;
+	}
+
+	std::cout << "\n조건에 맞는 추천 동아리 목록:\n";
+	for (const auto& club : filteredClubs)
+	{
+		std::cout << "- " << club << "\n";
+		clubRecommendCount[club]++;
+	}
+	std::cout << "\n";
+}
 int main()
 {
 	std::map<std::string, std::vector<std::string>> keyword;
@@ -483,30 +568,32 @@ int main()
 			std::string userInput = getUserInput("요즘 관심 있는 주제에 대해 자유롭게 입력해주세요!\n\n");
 
 			if (userInput == "exit") break;
-			// 0. 요일 기반 
-			recommendClubsByDay(userInput, dayClubs);
-			// 1. 비용 고려
-			recommendClubsByBudget(userInput, allClubs);
+			//// 0. 요일 기반 
+			//recommendClubsByDay(userInput, dayClubs);
+			//// 1. 비용 고려
+			//recommendClubsByBudget(userInput, allClubs);
 
-			// 2. 저녁 시간대 동아리 질문 확인 및 추천
-			checkEveningActivity(userInput, eveningClubs);
-			checkMorningActivity(userInput, morningClubs);
-			checkAfternoonActivity(userInput, afternoonClubs);
+			//// 2. 저녁 시간대 동아리 질문 확인 및 추천
+			//checkEveningActivity(userInput, eveningClubs);
+			//checkMorningActivity(userInput, morningClubs);
+			//checkAfternoonActivity(userInput, afternoonClubs);
 
+
+			// 7. 통합
+			recommendClubsByCombinedConditions(userInput, keyword, similarWords, dayClubs, allClubs);
 
 			// 3. 단어 빈도 분석
 			analyzeUserInput(userInput);
 
-			// 4. 추천 처리
-			processInterestInput(userInput, keyword, similarWords); // 관심 키워드 처리 함수 호출
+			//// 4. 추천 처리
+			//processInterestInput(userInput, keyword, similarWords); // 관심 키워드 처리 함수 호출
 
 			// 5. 잠재 키워드 후보 출력 (빈도 2 이상 단어)
 
 			printCandidateKeywords(2);
 
-			// 6. 오프라인, 온라인
-			recommendByLocation(userInput, offlineClubs, onlineClubs);
-
+			//// 6. 오프라인, 온라인
+			//recommendByLocation(userInput, offlineClubs, onlineClubs);
 			std::cout << "\n---------------------\n";
 		}
 	}
