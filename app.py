@@ -152,5 +152,3 @@ def clear():
 if __name__ == "__main__":
     print("✅ Flask 서버 시작 중... http://127.0.0.1:5000")
     app.run(debug=True)
-
-
