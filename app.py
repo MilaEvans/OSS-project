@@ -197,7 +197,16 @@ def chat():
 
 @app.route("/clear", methods=["POST"])
 def clear():
+
     session.clear()
     session["stage"] = 0
     session["base_filters"] = []
     return render_template("chat.html", history=[("bot", "MBTI나 관심사를 입력해주세요!")])
+
+    session.pop("history", None)
+    return render_template("chat.html", history=[])
+##파일 이름 미정
+@app.route("/other")
+def other_page():
+    return render_template("other.html")
+
