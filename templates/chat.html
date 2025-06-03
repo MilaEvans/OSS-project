@@ -92,10 +92,48 @@
             gap: 10px;
         }
     </style>
+
+    <style>
+        body {
+            font-size: 16px;
+            transition: font-size 0.3s;
+        }
+
+        .zoom-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+
+        .zoom-controls button {
+            margin: 2px;
+            padding: 6px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .wrapper {
+            max-width: 1200px;
+            margin: auto;
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
+<div class="zoom-controls">
+    <button onclick="changeFontSize(-1)">A-</button>
+    <button onclick="changeFontSize(1)">A+</button>
+</div>
+
+<div class="wrapper">
     <div class="container">
         <h2>동아리 추천 챗봇</h2>
+        <div style="text-align: right; margin-bottom: 10px;">
+            <form action="/other" method="get">
+                <button type="submit" style="background-color: #6c757d;">다른 기능 페이지</button>
+            </form>
+        </div>
 
         <div class="chat-box">
             {% for speaker, message in history %}
@@ -114,5 +152,17 @@
             </div>
         </form>
     </div>
+
+    <script>
+        let fontSize = 16;
+
+        function changeFontSize(delta) {
+            fontSize += delta;
+            if (fontSize < 10) fontSize = 10;
+            if (fontSize > 30) fontSize = 30;
+            document.body.style.fontSize = fontSize + "px";
+        }
+    </script>
+</div>
 </body>
 </html>
