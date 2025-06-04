@@ -1,9 +1,8 @@
 import os
 import subprocess
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory
+from flask import Flask, request, render_template, send_from_directory
 from PIL import Image
 import pytesseract
-import datetime
 from markupsafe import Markup
 
 app = Flask(__name__)
@@ -17,166 +16,177 @@ def nl2br_filter(s):
         return ''
     return Markup(s.replace('\n', '<br>\n'))
 
+# 새로 추가: 태그별 CSS 클래스 필터
+@app.template_filter('tag_class')
+def tag_class_filter(tag):
+    mapping = {
+        "저녁": "tag-evening",
+        "회비 없음": "tag-free",
+        "수요일": "tag-wednesday",
+        "온라인": "tag-online",
+        "오후": "tag-afternoon",
+        "일요일": "tag-sunday",
+        "토요일": "tag-saturday",
+        "회비 있음": "tag-paid",
+        "금요일": "tag-friday",
+        "오프라인": "tag-offline",
+    }
+    return mapping.get(tag, "tag-default")
+
+# tesseract 경로 설정 (Windows 예시)
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 clubs_info = {
-    # 코딩
-    "코딩하는친구들": {
-        "description": "코딩 동아리",
-        "introduction": "코딩하는친구들은 ",
-        "schedule": [
-            "5-7 매주 수요일 오후 6시 ~ 8시",
-        ],
-        "category": "프로그래밍",
-        "members": 30,
-        "tags": ["저녁", "회비 없음", "수요일", "온라인"],
-    },
-    "밤샘코딩": {
-        "description": "코딩 동아리",
-        "introduction": "밤샘코딩은",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "category": "게임 개발",
-        "members": 20,
-        "tags": ["오후", "회비 없음", "수요일", "온라인"],
-    },
-    "코드수다방": {
-        "description": "코딩 동아리",
-        "introduction": "코드수다방은 ",
-        "schedule": [
-            "5-9 매주 금요일 오후 5시 ~ 7시",
-        ],
-        "category": "보안",
-        "members": 15,
-       "tags": ["오전", "회비 없음", "일요일", "온라인"],
-    },
-    "오픈소스동네": {
-        "description": "코딩 동아리",
-        "introduction": "오픈소스동네 동아리는 ",
-        "schedule": [
-            "5-9 매주 금요일 오후 5시 ~ 7시",
-        ],
-        "tags": ["오전", "회비 있음", "토요일", "온라인"],
-        "category": "보안",
-        "members": 15,
-    },
-    "디버깅모임": {
-        "description": "코딩 동아리",
-        "introduction": "디버깅모임 동아리는 ",
-        "schedule": [
-            "5-9 매주 금요일 오후 5시 ~ 7시",
-        ],
-        "tags": ["오후", "회비 있음", "금요일", "오프라인"],
-        "category": "보안",
-        "members": 15,
-    },
+"코딩하는친구들": {
+    "description": "웹 개발 동아리",
+    "introduction": "웹 개발에 관심 있는 학생들이 모여 다양한 프로젝트를 함께 진행하는 코딩하는친구들입니다.",
+    "schedule": ["매주 수요일 저녁 6시부터 8시까지 온라인으로 진행됩니다."],
+    "category": "웹",
+    "members": 30,
+    "tags": ["저녁", "회비 없음", "수요일", "온라인"]
+},
+"밤샘코딩": {
+    "description": "게임 개발 동아리",
+    "introduction": "게임 개발에 열정을 가진 멤버들이 모여 매주 수요일 오후에 온라인으로 함께 코딩하는 밤샘코딩입니다.",
+    "schedule": ["매주 수요일 오후 7시부터 9시까지 온라인에서 진행됩니다."],
+    "category": "게임 개발",
+    "members": 20,
+    "tags": ["오후", "회비 없음", "수요일", "온라인"]
+},
+"코드수다방": {
+    "description": "C++ 프로그래밍 동아리",
+    "introduction": "C++ 언어와 보안 관련 주제를 다루며 매주 일요일 오전에 온라인으로 모이는 코드수다방입니다.",
+    "schedule": ["매주 일요일 오전 9시부터 11시까지 온라인에서 진행됩니다."],
+    "category": "C++",
+    "members": 15,
+    "tags": ["오전", "회비 없음", "일요일", "온라인"]
+},
+"오픈소스동네": {
+    "description": "오픈소스 기여 동아리",
+    "introduction": "오픈소스 프로젝트에 기여하며 함께 성장하는 오픈소스동네입니다.",
+    "schedule": ["매주 토요일 오전 9시부터 11시까지 온라인에서 활동합니다."],
+    "category": "오픈소스",
+    "members": 15,
+    "tags": ["오전", "회비 있음", "토요일", "온라인"]
+},
+"디버깅모임": {
+    "description": "오프라인 디버깅 동아리",
+    "introduction": "프로그램의 오류를 함께 찾아내고 해결하는 오프라인 디버깅모임입니다.",
+    "schedule": ["매주 금요일 오후 5시부터 7시까지 오프라인에서 진행됩니다."],
+    "category": "디버깅",
+    "members": 15,
+    "tags": ["오후", "회비 있음", "금요일", "오프라인"]
+},
 
-    # 운동
+
+
+        # 운동
     
-    "땀흘리기": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["저녁", "회비 없음", "토요일", "오프라인"],
-        "category": "헬스",
-        "members": 20,
-    },
-    "운동하자": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["저녁", "회비 있음", "화요일", "온라인"],
-        "category": "헬스",
-        "members": 20,
-    },
-    "뛰뛰빵빵": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["오전", "회비 없음", "화요일", "온라인"],
-        "category": "헬스",
-        "members": 20,
-    },
-    "런닝메이트": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["저녁", "회비 있음", "월요일", "온라인"],
-        "category": "헬스",
-        "members": 20,
-    },
-    "주말농구": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["저녁", "회비 있음", "수요일", "오프라인"],
-        "category": "헬스",
-        "members": 20,
-    },
+"땀흘리기": {
+    "description": "토요일 오프라인 헬스 운동 동아리",
+    "introduction": "땀흘리기 동아리는 매주 토요일 저녁에 오프라인에서 함께 운동하며 건강을 증진하는 헬스 동아리입니다.",
+    "schedule": [
+        "매주 토요일 저녁 7시 ~ 9시",
+    ],
+    "tags": ["저녁", "회비 없음", "토요일", "오프라인"],
+    "category": "헬스",
+    "members": 20,
+},
+"운동하자": {
+    "description": "화요일 저녁 온라인 탁구 동아리",
+    "introduction": "운동하자는 화요일 저녁에 온라인으로 모여 탁구 관련 훈련과 대회를 즐기는 동아리입니다.",
+    "schedule": [
+        "매주 화요일 저녁 7시 ~ 9시",
+    ],
+    "tags": ["저녁", "회비 있음", "화요일", "오프라인"],
+    "category": "탁구",
+    "members": 20,
+},
+"뛰뛰빵빵": {
+    "description": "화요일 오전 온라인 탁구 동아리",
+    "introduction": "뛰뛰빵빵은 화요일 오전에 온라인으로 모여 탁구 실력 향상을 위한 연습과 토론을 진행하는 동아리입니다.",
+    "schedule": [
+        "매주 화요일 오전 7시 ~ 9시",
+    ],
+    "tags": ["오전", "회비 없음", "화요일", "오프라인"],
+    "category": "탁구",
+    "members": 20,
+},
+"런닝메이트": {
+    "description": "월요일 저녁 온라인 러닝 동아리",
+    "introduction": "런닝메이트는 월요일 저녁에 온라인으로 함께 러닝 계획을 세우고 운동을 진행하는 러닝 동아리입니다.",
+    "schedule": [
+        "매주 월요일 저녁 7시 ~ 9시",
+    ],
+    "tags": ["저녁", "회비 있음", "월요일", "오프라인"],
+    "category": "러닝",
+    "members": 20,
+},
+"주말농구": {
+    "description": "수요일 저녁 오프라인 농구 동아리",
+    "introduction": "주말농구는 수요일 저녁에 오프라인으로 모여 농구 경기를 즐기고 실력을 키우는 농구 동아리입니다.",
+    "schedule": [
+        "매주 수요일 저녁 7시 ~ 9시",
+    ],
+    "tags": ["저녁", "회비 있음", "수요일", "오프라인"],
+    "category": "농구",
+    "members": 20,
+},
+
 
     # 댄스
     
-    "춤추는우리": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["오전", "회비 있음", "금요일", "온라인"],
-        "category": "헬스",
-        "members": 20,
-    },
-    "리듬따라": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["오전", "회비 있음", "토요일", "온라인"],
-        "category": "헬스",
-        "members": 20,
-    },
-    "뽐내기댄스": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["저녁", "회비 있음", "금요일", "온라인"],
-        "category": "헬스",
-        "members": 20,
-    },
-    "비트속으로": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["오전", "회비 있음", "일요일", "오프라인"],
-        "category": "헬스",
-        "members": 20,
-    },
-    "즐거운댄스": {
-        "description": "운동 동아리",
-        "introduction": "땀흘리기 동아리는",
-        "schedule": [
-            "5-6 매주 화요일 오후 7시 ~ 9시",
-        ],
-        "tags": ["저녁", "회비 없음", "수요일", "오프라인"],
-        "category": "헬스",
-        "members": 20,
-    },
+ "춤추는우리": {
+    "description": "K-POP 댄스 동아리",
+    "introduction": "춤추는우리 동아리는 K-POP 댄스를 사랑하는 사람들이 모여 다양한 아이돌 댄스와 퍼포먼스를 연습하는 동아리입니다.",
+    "schedule": [
+        "5-6 매주 금요일 오전 10시 ~ 12시",
+    ],
+    "tags": ["오전", "회비 있음", "금요일", "온라인"],
+    "category": "K-POP",
+    "members": 20,
+},
+"리듬따라": {
+    "description": "힙합 댄스 동아리",
+    "introduction": "리듬따라 동아리는 힙합과 스트리트 댄스를 중심으로 자유로운 표현과 팀워크를 즐기는 모임입니다.",
+    "schedule": [
+        "5-6 매주 토요일 오전 10시 ~ 12시",
+    ],
+    "tags": ["오전", "회비 있음", "토요일", "온라인"],
+    "category": "힙합",
+    "members": 20,
+},
+"뽐내기댄스": {
+    "description": "스트릿 댄스 동아리",
+    "introduction": "뽐내기댄스 동아리는 스트릿 댄스와 다양한 퍼포먼스를 통해 자신만의 개성을 표현하는 동아리입니다.",
+    "schedule": [
+        "5-6 매주 금요일 저녁 7시 ~ 9시",
+    ],
+    "tags": ["저녁", "회비 있음", "금요일", "온라인"],
+    "category": "스트릿",
+    "members": 20,
+},
+"비트속으로": {
+    "description": "락킹 댄스 동아리",
+    "introduction": "비트속으로 동아리는 락킹 댄스를 즐기며 리듬과 몸의 움직임을 조화롭게 맞추는 동아리입니다.",
+    "schedule": [
+        "5-6 매주 일요일 오전 10시 ~ 12시",
+    ],
+    "tags": ["오전", "회비 있음", "일요일", "오프라인"],
+    "category": "락킹",
+    "members": 20,
+},
+"즐거운댄스": {
+    "description": "탱고 댄스 동아리",
+    "introduction": "즐거운댄스 동아리는 아르헨티나 탱고를 중심으로 우아하고 열정적인 춤을 배우는 동아리입니다.",
+    "schedule": [
+        "5-6 매주 수요일 저녁 7시 ~ 9시",
+    ],
+    "tags": ["저녁", "회비 없음", "수요일", "오프라인"],
+    "category": "탱고",
+    "members": 20,
+},
+
 
     # 게임
 
@@ -586,7 +596,7 @@ clubs_info = {
 "색칠놀이": {
   "description": "미술 동아리",
   "introduction": "색칠과 채색을 중심으로 그림 그리는 즐거움을 느껴요.",
-  "schedule": ["5-6 매주 수요일 오후 7시 ~ 9시"],
+  "schedule": ["5-6 매주 수요일 저녁 7시 ~ 9시"],
   "tags": ["저녁", "회비 있음", "수요일", "온라인"],
   "category": "미술",
   "members": 15
@@ -696,7 +706,6 @@ clubs_info = {
   "members": 15
 },
 
-                    
 }
 
 @app.route('/uploads/<filename>')
@@ -711,7 +720,7 @@ def index():
     if selected_category == '전체':
         filtered_clubs = clubs_info
     else:
-        filtered_clubs = {k:v for k,v in clubs_info.items() if v['category'] == selected_category}
+        filtered_clubs = {k: v for k, v in clubs_info.items() if v['category'] == selected_category}
 
     if request.method == 'POST':
         file = request.files.get('poster')
@@ -746,7 +755,7 @@ def index():
                 print("C++ 프로그램 에러:", errors)
         except subprocess.TimeoutExpired:
             proc.kill()
-            output, errors = proc.communicate()
+            output, _ = proc.communicate()
             output = f"Timeout expired. Process killed.\n{output}"
         except Exception as e:
             output = f"Error running C++ program: {str(e)}"
@@ -759,15 +768,10 @@ def index():
                 name, _ = line.split(':', 1)
                 name = name.strip()
                 if name in clubs_info:
-                    icon_map = {
-                        "COSMIC": "laptop-code",
-                        "CaTs": "gamepad",
-                        "CERT": "shield-alt"
-                    }
                     recommended_clubs.append({
                         "name": name,
                         "description": clubs_info[name]["description"],
-                        "icon": icon_map.get(name, "star"),
+                        "icon": "star",
                         "tags": clubs_info[name].get("tags", [])
                     })
 
@@ -791,8 +795,7 @@ def club_detail(club_name):
                                introduction="소개 정보가 없습니다.",
                                schedule=[],
                                members=0,
-                               category="",
-                               datetime=datetime)
+                               category="")
 
     return render_template('club_detail.html',
                            club_name=club_name,
@@ -800,8 +803,7 @@ def club_detail(club_name):
                            introduction=club["introduction"],
                            schedule=club.get("schedule", []),
                            members=club.get("members", 0),
-                           category=club.get("category", ""),
-                           datetime=datetime)
+                           category=club.get("category", ""))
 
 @app.route('/apply/<club_name>', methods=['GET', 'POST'])
 def apply_club(club_name):
@@ -809,14 +811,13 @@ def apply_club(club_name):
         name = request.form.get('name')
         email = request.form.get('email')
         motivation = request.form.get('motivation')
-        
-        # 여기에 저장/이메일 전송/DB 연동 등 처리 로직 추가 가능
+
+        # 신청 처리 로직 (DB나 이메일 연동 가능)
         print(f"[신청] 이름: {name}, 이메일: {email}, 동기: {motivation}, 동아리: {club_name}")
 
         return render_template('apply_success.html', club_name=club_name, name=name)
-    
-    return render_template('apply_form.html', club_name=club_name)
 
+    return render_template('apply_form.html', club_name=club_name)
 
 if __name__ == '__main__':
     app.run(debug=True)
