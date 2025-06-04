@@ -107,11 +107,11 @@
 </head>
 <body>
   <div class="container">
-    <h1>동아리 포스터 업로드</h1>
-    <form method="post" enctype="multipart/form-data">
+    <h1>이미지 업로드</h1>
+    <form method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
       <label for="poster" class="upload-label">
         📎 포스터 이미지를 선택하세요
-        <input type="file" name="poster" id="poster" accept="image/*" required onchange="previewImage(event)" />
+        <input type="file" name="poster" id="poster" accept="image/*" onchange="previewImage(event)" />
       </label>
       <img id="preview" alt="포스터 미리보기" />
       <br />
@@ -134,6 +134,15 @@
         preview.src = "";
         preview.style.display = "none";
       }
+    }
+
+    function validateForm() {
+      const fileInput = document.getElementById('poster');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('포스터 이미지를 선택해주세요.');
+        return false; // 제출 막기
+      }
+      return true; // 제출 허용
     }
   </script>
 </body>
