@@ -22,6 +22,11 @@
     .tag-badge {
       margin: 2px;
     }
+
+    .schedule-list {
+      max-height: 200px;  /* 높이 조절 가능 */
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
@@ -60,7 +65,7 @@
           </div>
           <div class="card-body">
             {% if schedule %}
-              <ul class="list-group list-group-flush">
+              <ul class="list-group list-group-flush schedule-list">
                 {% for item in schedule %}
                   <li class="list-group-item schedule-item">{{ item }}</li>
                 {% endfor %}
