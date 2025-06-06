@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ko">
 <head>
 <meta charset="utf-8"/>
@@ -10,30 +9,29 @@
 <div class="container py-5">
 <h2 class="mb-4 text-center">{{ club_name }} 신청하기</h2>
 <div style="text-align: right; margin-bottom: 10px;">
-<a href="{{ url_for('index') }}"><button style="background-color: #6c757d;" type="button">메인</button></a>
-<a href="{{ url_for('result') }}"><button style="background-color: #6c757d;" type="button">추천 결과</button></a>
-<a href="{{ url_for('club_detail', club_id=1) }}"><button style="background-color: #6c757d;" type="button">동아리 상세</button></a>
-<a href="{{ url_for('apply_form') }}"><button style="background-color: #6c757d;" type="button">신청 폼</button></a>
-<a href="{{ url_for('apply_success') }}"><button style="background-color: #6c757d;" type="button">신청 완료</button></a>
+  <a href="{{ url_for('index') }}"><button style="background-color: #6c757d;" type="button">메인</button></a>
+  <a href="{{ url_for('result') }}"><button style="background-color: #6c757d;" type="button">추천 결과</button></a>
+  <a href="{{ url_for('club_detail', club_id=1) }}"><button style="background-color: #6c757d;" type="button">동아리 상세</button></a>
+  <a href="{{ url_for('apply_form') }}"><button style="background-color: #6c757d;" type="button">신청 폼</button></a>
+  <a href="{{ url_for('apply_success') }}"><button style="background-color: #6c757d;" type="button">신청 완료</button></a>
 </div>
 
 <form action="{{ url_for('apply_form') }}" method="post">
-<div class="mb-3">
-<label class="form-label" for="name">이름</label>
-<input class="form-control" id="name" name="name" required="" type="text"/>
-</div>
-<div class="mb-3">
-<label class="form-label" for="email">이메일</label>
-<input class="form-control" id="email" name="email" required="" type="email"/>
-</div>
-<div class="mb-3">
-<label class="form-label" for="motivation">지원 동기</label>
-<textarea class="form-control" id="motivation" name="motivation" required="" rows="4"></textarea>
-</div>
-<button class="btn btn-primary" type="submit">신청하기</button>
-<a class="btn btn-secondary" href="{{ url_for('club_detail', club_id=1) }}">취소</a>
+  <div class="mb-3">
+    <label class="form-label" for="name">이름</label>
+    <input class="form-control" id="name" name="name" required type="text"/>
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="email">이메일</label>
+    <input class="form-control" id="email" name="email" required type="email"/>
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="motivation">지원 동기</label>
+    <textarea class="form-control" id="motivation" name="motivation" rows="4" required></textarea>
+  </div>
+  <button class="btn btn-primary" type="submit">신청하기</button>
+  <a class="btn btn-secondary" href="{{ url_for('club_detail', club_id=1) }}">취소</a>
 </form>
 </div>
 </body>
 </html>
-
