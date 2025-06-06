@@ -138,7 +138,7 @@
 
     {% if recommended_clubs %}
         {% for club in recommended_clubs %}
-        <a class="text-decoration-none" href="{{ url_for('club_detail', club_name=club.name) }}">
+<a class="text-decoration-none" href="{{ url_for('club_detail', club_id=club.id) }}">
 <div class="recommendation-card">
 <div class="icon-circle">
 <i class="bi bi-{{ club.icon }}"></i>
@@ -157,5 +157,5 @@
         <p>추천 동아리가 없습니다.</p>
     {% endif %}
 </div>
-<a href="{{ url_for('club_detail') }}">상세보기</a></body>
+<a href="{{ url_for('club_detail', club_id=1) }}">상세보기</a>
 </html>
