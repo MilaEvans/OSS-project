@@ -48,7 +48,9 @@ def index():
     session["stage"] = 0
     session["mbti"] = None
     session["filters"] = []
-    return render_template("chat.html", history=[("bot", "MBTI만 입력해주세요! 예: INFP")])
+    # chat.html 렌더링 시 초기 메시지
+    return render_template("chat.html", history=[("bot", "안녕하세요! 😊\n당신의 MBTI를 입력해주시면, 어울리는 동아리를 추천해드릴게요.\n예: INFP")])
+
 
 @app.route("/chat", methods=["GET", "POST"])
 def chat():
@@ -69,7 +71,7 @@ def chat():
                 text=True, capture_output=True,
                 encoding='utf-8', errors='replace'
             )
-            bot_response = result.stdout.strip() if result.returncode == 0 else f"[오류] {result.stderr.strip()}"
+            bot_response = "앗, 아직 MBTI를 입력하지 않으셨어요 😅 예: ENFP 처럼 입력해주세요!"
             session["history"].append(("user", user_input))
             session["history"].append(("bot", bot_response))
             return render_template("chat.html", history=session["history"])
@@ -82,10 +84,15 @@ def chat():
                 session["filters"] = []
                 session["stage"] = 1
                 bot_response = (
-                    f"좋습니다! ‘{mbti}’을(를) 기반으로 추가 필터를 입력해주세요.\n"
-                    "예) 시간대(오전/오후/저녁), 회비(무료/유료), 요일(월요일…일요일), 형태(온라인/오프라인).\n"
-                    "모든 필터 입력 후 최종 추천을 원하시면 ‘끝’이라고 입력해주세요."
+                        f"{mbti} 타입이시군요! 😊\n"
+                        "좋아요, 취향에 맞는 동아리를 찾기 위해 몇 가지를 여쭤볼게요.\n\n"
+                        "🕒 선호하는 시간대가 있나요? (예: 오전, 오후, 저녁)\n"
+                        "💰 회비는 어떻게 되면 좋을까요? (무료 / 유료)\n"
+                        "📅 가능한 요일이 있으신가요? (월~일 중 선택)\n"
+                        "🌐 활동 형태는요? (온라인 / 오프라인)\n\n"
+                        "모두 입력하셨다면 ‘끝’이라고 입력해 주세요!"
                 )
+
             else:
                 bot_response = "MBTI만 입력해주세요! 예: INFP"
 
