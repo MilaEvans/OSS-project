@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>동아리 추천 챗봇</title>
-    <style>
+<meta charset="utf-8"/>
+<title>동아리 추천 챗봇</title>
+<style>
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f7f7f7;
@@ -92,8 +93,7 @@
             gap: 10px;
         }
     </style>
-
-    <style>
+<style>
         body {
             font-size: 16px;
             transition: font-size 0.3s;
@@ -122,38 +122,42 @@
 </head>
 <body>
 <div class="zoom-controls">
-    <button onclick="changeFontSize(-1)">A-</button>
-    <button onclick="changeFontSize(1)">A+</button>
+<button onclick="changeFontSize(-1)">A-</button>
+<button onclick="changeFontSize(1)">A+</button>
+</div>
+<div class="wrapper">
+<div class="container">
+<h2>동아리 추천 챗봇</h2>
+<div style="text-align: right; margin-bottom: 10px;">
+<a href="{{ url_for('index') }}"><button style="background-color: #6c757d;" type="button">메인</button></a>
+<a href="{{ url_for('result') }}"><button style="background-color: #6c757d;" type="button">추천 결과</button></a>
+<a href="{{ url_for('club_detail', club_id=1) }}"><button style="background-color: #6c757d;" type="button">동아리 상세</button></a>
+<a href="{{ url_for('apply_form') }}"><button style="background-color: #6c757d;" type="button">신청 폼</button></a>
+<a href="{{ url_for('apply_success') }}"><button style="background-color: #6c757d;" type="button">신청 완료</button></a>
 </div>
 
-<div class="wrapper">
-    <div class="container">
-        <h2>동아리 추천 챗봇</h2>
-        <div style="text-align: right; margin-bottom: 10px;">
-            <form action="/other" method="get">
-                <button type="submit" style="background-color: #6c757d;">다른 기능 페이지</button>
-            </form>
-        </div>
-
-        <div class="chat-box">
+<div style="text-align: right; margin-bottom: 10px;">
+<form action="{{ url_for('chat') }}" method="get">
+<button style="background-color: #6c757d;" type="submit">다른 기능 페이지</button>
+</form>
+</div>
+<div class="chat-box">
             {% for speaker, message in history %}
                 <div class="message {{ speaker }}">{{ message }}</div>
             {% endfor %}
         </div>
-
-        <form method="POST" action="/chat" enctype="multipart/form-data">
-            <div class="input-section">
-                <input type="text" name="keyword" placeholder="텍스트 입력 (예: intp, 운동)">
-                <input type="file" name="image">
-            </div>
-            <div class="input-section">
-                <button type="submit">전송</button>
-                <button type="submit" formaction="/clear" formmethod="POST" class="clear">초기화</button>
-            </div>
-        </form>
-    </div>
-
-    <script>
+<form action="{{ url_for('chat') }}" enctype="multipart/form-data" method="POST">
+<div class="input-section">
+<input name="keyword" placeholder="텍스트 입력 (예: intp, 운동)" type="text"/>
+<input name="image" type="file"/>
+</div>
+<div class="input-section">
+<button type="submit">전송</button>
+<button class="clear" formaction="/clear" formmethod="POST" type="submit">초기화</button>
+</div>
+</form>
+</div>
+<script>
         let fontSize = 16;
 
         function changeFontSize(delta) {

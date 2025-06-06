@@ -1,10 +1,20 @@
-from flask import Flask, request, render_template, session
+from flask import Flask, request, render_template, session, redirect, url_for
 import subprocess
 import os
 import re
 
 app = Flask(__name__)
 app.secret_key = 'very_secret_key'
+
+@app.template_filter('tag_class')
+def tag_class_filter(value):
+    return {
+        '운동': 'badge-sports',
+        '음악': 'badge-music',
+        '기술': 'badge-tech',
+        '봉사': 'badge-service',
+        '기타': 'badge-default'
+    }.get(value, 'badge-default')
 
 # C++ 실행파일 경로 (mbti_project 디렉터리 내 MixBot)
 CPP_EXEC = os.path.join(os.path.dirname(__file__), 'mbti_project', 'MixBot')
@@ -40,7 +50,7 @@ def index():
     session["filters"] = []
     return render_template("chat.html", history=[("bot", "MBTI만 입력해주세요! 예: INFP")])
 
-@app.route("/chat", methods=["POST"])
+@app.route("/chat", methods=["GET", "POST"])
 def chat():
     session.setdefault("history", [])
     user_input = request.form.get("keyword", "").strip()
@@ -48,6 +58,9 @@ def chat():
 
     try:
         stage = session.get("stage", 0)
+
+        if request.method == "GET":
+            return render_template("chat.html", history=session["history"])
 
         # “인기”만 입력된 경우 (stage 0에서만)
         if stage == 0 and re.fullmatch(r"인기( 동아리|순위)?", user_input):
@@ -61,7 +74,7 @@ def chat():
             session["history"].append(("bot", bot_response))
             return render_template("chat.html", history=session["history"])
 
-        # ─── 단계 0: MBTI 입력 대기 ────────────────────────────────────
+        # ─── 단계 0: MBTI 입력 대기 ─────────────────────────────
         if stage == 0:
             mbti = extract_mbti(user_input)
             if mbti:
@@ -80,9 +93,8 @@ def chat():
             session["history"].append(("bot", bot_response))
             return render_template("chat.html", history=session["history"])
 
-        # ─── 단계 1: 추가 필터 입력 중 ─────────────────────────────────
+        # ─── 단계 1: 추가 필터 입력 중 ─────────────────────────
         if stage == 1:
-            # “끝” 입력 시 → 누적된 필터 + MBTI + 카운트 플래그로 최종 호출
             if user_input == "끝":
                 cmd = [CPP_EXEC, session["mbti"]] + session["filters"] + ["__count__"]
                 result = subprocess.run(
@@ -91,8 +103,6 @@ def chat():
                     encoding='utf-8', errors='replace'
                 )
                 bot_response = result.stdout.strip() if result.returncode == 0 else f"[오류] {result.stderr.strip()}"
-
-                # 상태 초기화
                 session["stage"] = 0
                 session["mbti"] = None
                 session["filters"] = []
@@ -100,16 +110,13 @@ def chat():
                 session["history"].append(("bot", bot_response))
                 return render_template("chat.html", history=session["history"])
 
-            # 1) 유사어 적용 (예: "농구" → "운동")
             lower = user_input.lower()
             for syn, kw in similar_words.items():
                 if syn in lower:
                     user_input = user_input.replace(syn, kw)
 
-            # 2) 새 필터 추가
             session["filters"].append(user_input)
 
-            # 3) C++ 호출 (사전보기 모드, 카운트 플래그 미포함)
             cmd = [CPP_EXEC, session["mbti"]] + session["filters"]
             result = subprocess.run(
                 cmd,
@@ -118,13 +125,10 @@ def chat():
             )
 
             if result.returncode != 0:
-                # 오류 발생 → 직전 필터는 무시하고 재시도
                 session["filters"].pop()
                 bot_response = f"[오류] {result.stderr.strip() or '원인 불명'}"
             else:
                 output = result.stdout.strip()
-
-                # “해당되는 동아리가 없습니다” 메시지 검사
                 if "해당되는 동아리가 없습니다" in output:
                     session["filters"].pop()
                     bot_response = (
@@ -135,7 +139,6 @@ def chat():
                     session["history"].append(("bot", bot_response))
                     return render_template("chat.html", history=session["history"])
 
-                # “‘- 동아리이름’” 줄만 골라 리스트 생성
                 lines = [ln.strip() for ln in output.splitlines() if ln.startswith("- ")]
                 clubs = [ln[2:] for ln in lines]
 
@@ -164,7 +167,6 @@ def chat():
             session["history"].append(("bot", bot_response))
             return render_template("chat.html", history=session["history"])
 
-        # ─── 예외 상황 ─────────────────────────────────────────
         bot_response = "알 수 없는 상태입니다. MBTI만 입력해주세요."
         session["stage"] = 0
         session["mbti"] = None
@@ -187,5 +189,24 @@ def clear():
     session["filters"] = []
     return render_template("chat.html", history=[("bot", "MBTI만 입력해주세요! 예: INFP")])
 
+@app.route("/result")
+def result():
+    return render_template("result.html")
+
+@app.route("/club/<club_id>")
+def club_detail(club_id):
+    return render_template("club_detail.html", club_id=club_id)
+
+@app.route("/apply", methods=["GET", "POST"])
+def apply_form():
+    if request.method == "POST":
+        return redirect(url_for("apply_success"))
+    return render_template("apply_form.html")
+
+@app.route("/apply/success")
+def apply_success():
+    return render_template("apply_success.html")
+
 if __name__ == "__main__":
     app.run(debug=True)
+
