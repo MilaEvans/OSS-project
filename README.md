@@ -41,4 +41,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 @개발자 항목
 MilaEvans(팀장, 한민서)
 useropea(이정준) dlwjdwns1220@naver.com
-HappyThings2(김도성)
+HappyThings2(김도성) doseong0213@naver.com
