@@ -143,7 +143,7 @@
 </div>
 <div class="chat-box">
             {% for speaker, message in history %}
-                <div class="message {{ speaker }}">{{ message }}</div>
+                <div class="message {{ speaker }}">{{ message | replace('\n', '<br>') | safe }}</div>
             {% endfor %}
         </div>
 <form action="{{ url_for('chat') }}" enctype="multipart/form-data" method="POST">
