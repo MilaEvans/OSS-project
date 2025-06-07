@@ -10,12 +10,18 @@
 - 이미지를 올리면 분석을 통해 그에 맞는 동아리를 추천해준다.
 - 추천 받은 동아리에 신청을 할 수 있다. <<= 기능미구현
 
-@설치방법
+@설치방법 
+
 pip install flask
+
 pip install pillow
+
 pip install tesseract
+
 pip install python
+
 pip install g++
+
 pip install pytesseract
 
 @실행 방법
