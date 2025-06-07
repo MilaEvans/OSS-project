@@ -28,6 +28,7 @@ pip install pytesseract
 - ** 윈도우 10인 경우, app.py 실행 전에 아래의 두 명령어 필요
 - $rm ./mbti_project/MixBot
 - $g++ -std=c++17 ./mbti_project/MixBot.cpp -o ./mbti_project/MixBot
+- $g++ ./Image extraction/image_extraction.cpp -o image_extraction.exe
 1. app.py 파일 실행
 2. Flask를 통해 만들어진 주소 접속
 3. 사이트 실행
