@@ -186,10 +186,6 @@ def clear():
     session["filters"] = []
     return render_template("chat.html", history=[("bot", "MBTI만 입력해주세요! 예: INFP")])
 
-@app.route("/result")
-def result():
-    uploaded_image = session.get("uploaded_image")
-    return render_template("result.html", uploaded_image=uploaded_image)
 
 @app.route("/club/<club_id>")
 def club_detail(club_id):
@@ -205,6 +201,7 @@ def apply_form():
 def apply_success():
     return render_template("apply_success.html")
 
+
 @app.route("/index", methods=["GET", "POST"])
 def index_page():
     if request.method == "POST":
@@ -214,11 +211,72 @@ def index_page():
             upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(upload_path)
 
-            session["uploaded_image"] = url_for('static', filename='uploads/' + filename)
-            return redirect(url_for("result"))
-        else:
-            return render_template("index.html", error="이미지를 업로드해주세요.")
+            try:
+                from PIL import Image
+                import pytesseract
+                pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+                image = Image.open(upload_path)
+                extracted_text = pytesseract.image_to_string(image, lang='kor+eng')
+                extracted_text = extracted_text.replace("=", "")
+
+                txt_path = os.path.splitext(upload_path)[0] + ".txt"
+                with open(txt_path, "w", encoding="utf-8") as f:
+                    f.write(extracted_text)
+
+                session["uploaded_image"] = upload_path
+                session["extracted_text"] = extracted_text
+
+                return redirect(url_for("result"))
+            except Exception as e:
+                return f"OCR 처리 중 오류 발생: {e}"
     return render_template("index.html")
 
+
+@app.route("/result")
+def result():
+    uploaded_image = session.get("uploaded_image")
+    extracted_text = ""
+    recommended_clubs = []
+
+    if uploaded_image:
+        txt_path = os.path.splitext(uploaded_image)[0] + ".txt"
+
+        if os.path.exists(txt_path):
+            with open(txt_path, "r", encoding="utf-8") as f:
+                extracted_text = f.read()
+
+        cpp_exec = os.path.join(os.path.dirname(__file__), 'Image extraction', 'image_extraction.exe')
+
+        try:
+            result = subprocess.run(
+                [cpp_exec, txt_path],
+                text=True,
+                capture_output=True,
+                encoding='utf-8',
+                errors='replace'
+            )
+            output = result.stdout.strip()
+
+        
+            for i, line in enumerate(output.splitlines()):
+                if line.strip():
+                    recommended_clubs.append({
+                        "id": i + 1,
+                        "name": line.strip(),
+                        "description": "이미지 분석 결과로 추천된 동아리입니다.",
+                        "tags": [],
+                        "icon": "star"
+                    })
+
+        except Exception as e:
+            recommended_clubs = []
+
+    return render_template(
+        "result.html",
+        uploaded_image=uploaded_image,
+        extracted_text=extracted_text,
+        recommended_clubs=recommended_clubs  
+    )
 if __name__ == "__main__":
     app.run(debug=True)
