@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>동아리 추천</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet"/>
+<style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Pretendard', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #deeaff, #f0f4ff);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      padding: 60px 40px;
+      border-radius: 30px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 460px;
+      text-align: center;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #2a3f75;
+    }
+
+    label.upload-label {
+      display: inline-block;
+      background: #eef3ff;
+      border: 2px dashed #a7b8e9;
+      padding: 30px 20px;
+      width: 100%;
+      max-width: 350px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      color: #4c5b7d;
+      font-size: 15px;
+    }
+
+    label.upload-label:hover {
+      background: #dce7ff;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    #preview {
+      margin-top: 20px;
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+
+    .submit-btn {
+      margin-top: 30px;
+      background: linear-gradient(135deg, #7aaeff, #5f8eff);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(88, 132, 255, 0.4);
+      transition: background 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      background: linear-gradient(135deg, #5f8eff, #7aaeff);
+    }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>이미지로 동아리 추천받기</h1>
+  <form action="{{ url_for('index_page') }}" method="POST" enctype="multipart/form-data">
+      <label for="file-upload" class="upload-label">
+        클릭해서 이미지 업로드
+        <input id="file-upload" type="file" name="image" accept="image/*" onchange="previewImage(event)">
+      </label>
+      <img id="preview" src="#" alt="미리보기 이미지"/>
+      <button type="submit" class="submit-btn">추천받기</button>
+    </form>
+  </div>
+
+  <script>
+    function previewImage(event) {
+      const input = event.target;
+      const preview = document.getElementById('preview');
+
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+
+        reader.readAsDataURL(input.files[0]);
+      } else {
+        preview.style.display = 'none';
+        preview.src = '#';
+      }
+    }
+  </script>
+</body>
+</html>
