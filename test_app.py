@@ -118,5 +118,3 @@ class AppFullTest(unittest.TestCase):
         response = self.client.post('/chat', data={'keyword': '말도안됨'})
         self.assertIn("MBTI를 다시 입력해주세요".encode(), response.data)
 
-if __name__ == '__main__':
-    unittest.main()

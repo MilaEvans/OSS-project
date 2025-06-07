@@ -115,8 +115,6 @@
         text-decoration: none !important;
         color: inherit;
     }
-
-    /* 태그별 배지 색상 */
     .badge.tag-evening { background: #FFB3AB; color: #7F3A34; }
     .badge.tag-free { background: #A8D5BA; color: #356635; }
     .badge.tag-wednesday { background: #A9D0F5; color: #1E5AA8; }
@@ -137,7 +135,7 @@
 
     {% if recommended_clubs %}
         {% for club in recommended_clubs %}
-        <a class="text-decoration-none" href="{{ url_for('club_detail', club_id=club.id) }}">
+        <a class="text-decoration-none" href="{{ url_for('club_detail', club_id=club.name) }}">
             <div class="recommendation-card">
                 <div class="icon-circle">
                     <i class="bi bi-{{ club.icon }}"></i>
@@ -162,7 +160,5 @@
         </a>
     </div>
 </div>
-
-<a href="{{ url_for('club_detail', club_id=1) }}">상세보기</a>
 </body>
 </html>

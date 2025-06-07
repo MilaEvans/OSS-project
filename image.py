@@ -818,6 +818,3 @@ def apply_club(club_name):
         return render_template('apply_success.html', club_name=club_name, name=name)
 
     return render_template('apply_form.html', club_name=club_name)
-
-if __name__ == '__main__':
-    app.run(debug=True)
