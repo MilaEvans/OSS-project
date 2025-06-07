@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8"/>
     <title>동아리 추천 챗봇</title>
     <style>
         body {
@@ -9,6 +9,28 @@
             background-color: #f7f7f7;
             margin: 0;
             padding: 0;
+            font-size: 16px;
+            transition: font-size 0.3s;
+        }
+
+        .zoom-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+
+        .zoom-controls button {
+            margin: 2px;
+            padding: 6px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .wrapper {
+            max-width: 1200px;
+            margin: auto;
+            padding: 10px;
         }
 
         .container {
@@ -33,20 +55,36 @@
             background-color: #fafafa;
             border-radius: 10px;
             margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            word-wrap: break-word;
             margin: 10px 0;
         }
 
         .message.user {
+            background-color: #007bff;
+            color: white;
             text-align: right;
-            color: #007bff;
+            border-bottom-right-radius: 0;
+            margin-left: auto;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.4);
         }
 
         .message.bot {
+            background-color: #28a745;
+            color: white;
             text-align: left;
-            color: #28a745;
+            border-bottom-left-radius: 0;
+            margin-right: auto;
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.4);
         }
 
         .image-preview {
@@ -92,33 +130,6 @@
             gap: 10px;
         }
     </style>
-
-    <style>
-        body {
-            font-size: 16px;
-            transition: font-size 0.3s;
-        }
-
-        .zoom-controls {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-        }
-
-        .zoom-controls button {
-            margin: 2px;
-            padding: 6px 10px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .wrapper {
-            max-width: 1200px;
-            margin: auto;
-            padding: 10px;
-        }
-    </style>
 </head>
 <body>
 <div class="zoom-controls">
@@ -129,40 +140,61 @@
 <div class="wrapper">
     <div class="container">
         <h2>동아리 추천 챗봇</h2>
+
         <div style="text-align: right; margin-bottom: 10px;">
-            <form action="/other" method="get">
-                <button type="submit" style="background-color: #6c757d;">다른 기능 페이지</button>
+            <a href="{{ url_for('index') }}"><button style="background-color: #6c757d;" type="button">메인</button></a>
+            <a href="{{ url_for('result') }}"><button style="background-color: #6c757d;" type="button">추천 결과</button></a>
+            <a href="{{ url_for('club_detail', club_id=1) }}"><button style="background-color: #6c757d;" type="button">동아리 상세</button></a>
+            <a href="{{ url_for('apply_form') }}"><button style="background-color: #6c757d;" type="button">신청 폼</button></a>
+            <a href="{{ url_for('apply_success') }}"><button style="background-color: #6c757d;" type="button">신청 완료</button></a>
+        </div>
+
+        <div style="text-align: right; margin-bottom: 10px;">
+            <a href="{{ url_for('index_page') }}">
+                <button style="background-color: #6c757d;" type="button">이미지 업로드 페이지</button>
+            </a>
+        </div>
+
+        <div style="text-align: right; margin-bottom: 10px;">
+            <form action="{{ url_for('chat') }}" method="get">
+                <button style="background-color: #6c757d;" type="submit">다른 기능 페이지</button>
             </form>
         </div>
 
-        <div class="chat-box">
+        <div class="chat-box" id="chatBox">
             {% for speaker, message in history %}
-                <div class="message {{ speaker }}">{{ message }}</div>
+                <div class="message {{ speaker }}">{{ message | replace('\n', '<br>') | safe }}</div>
             {% endfor %}
         </div>
 
-        <form method="POST" action="/chat" enctype="multipart/form-data">
+        <form action="{{ url_for('chat') }}" enctype="multipart/form-data" method="POST">
             <div class="input-section">
-                <input type="text" name="keyword" placeholder="텍스트 입력 (예: intp, 운동)">
-                <input type="file" name="image">
+                <input name="keyword" placeholder="텍스트 입력 (예: intp, 운동)" type="text"/>
+                <input name="image" type="file"/>
             </div>
             <div class="input-section">
                 <button type="submit">전송</button>
-                <button type="submit" formaction="/clear" formmethod="POST" class="clear">초기화</button>
+                <button class="clear" formaction="/clear" formmethod="POST" type="submit">초기화</button>
             </div>
         </form>
     </div>
-
-    <script>
-        let fontSize = 16;
-
-        function changeFontSize(delta) {
-            fontSize += delta;
-            if (fontSize < 10) fontSize = 10;
-            if (fontSize > 30) fontSize = 30;
-            document.body.style.fontSize = fontSize + "px";
-        }
-    </script>
 </div>
+
+<script>
+    let fontSize = 16;
+
+    function changeFontSize(delta) {
+        fontSize += delta;
+        if (fontSize < 10) fontSize = 10;
+        if (fontSize > 30) fontSize = 30;
+        document.body.style.fontSize = fontSize + "px";
+    }
+
+    // 페이지 로드 시 채팅창을 아래로 스크롤
+    window.onload = function () {
+        const chatBox = document.getElementById('chatBox');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    };
+</script>
 </body>
 </html>

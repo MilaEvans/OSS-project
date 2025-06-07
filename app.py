@@ -187,5 +187,3 @@ def clear():
     session["filters"] = []
     return render_template("chat.html", history=[("bot", "MBTI만 입력해주세요! 예: INFP")])
 
-if __name__ == "__main__":
-    app.run(debug=True)
