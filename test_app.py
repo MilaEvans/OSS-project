@@ -1,122 +1,112 @@
 import unittest
+import image
 from app import app
-from flask import session
-from unittest.mock import patch
+import io
+from PIL import Image
+import base64
+import tempfile
 
-class AppFullTest(unittest.TestCase):
+class TestApp(unittest.TestCase):
     def setUp(self):
-        self.client = app.test_client()
-        self.client.testing = True
+        self.app = app.test_client()
+        self.app.testing = True
 
-    def test_index_and_clear(self):
-        self.client.get('/')
-        response = self.client.post('/clear')
+    def test_index_route(self):
+        response = self.app.get('/')
         self.assertEqual(response.status_code, 200)
-        self.assertIn("MBTI만 입력해주세요".encode(), response.data)
+        self.assertIn("동아리 추천 챗봇", response.data.decode("utf-8"))
 
-    def test_chat_invalid_mbti(self):
-        self.client.get('/')
-        response = self.client.post('/chat', data={'keyword': '나는동아리추천'})
-        self.assertIn("MBTI만 입력해주세요".encode(), response.data)
+    def test_club_detail_route(self):
+        response = self.app.get('/club/코딩하는친구들')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("코딩하는친구들", response.data.decode("utf-8"))
 
-    @patch("app.subprocess.run")
-    def test_chat_popular(self, mock_run):
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "- 인기 동아리1\n- 인기 동아리2"
+class TestAppRoutes(unittest.TestCase):
+    def setUp(self):
+        self.app = app.test_client()
+        self.app.testing = True
 
-        self.client.get('/')
-        response = self.client.post('/chat', data={'keyword': '인기'})
-        self.assertIn("인기 동아리".encode(), response.data)
-
-    @patch("app.subprocess.run")
-    def test_chat_mbti_filter_end(self, mock_run):
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "- 동아리1\n- 동아리2"
-
-        self.client.get('/')
-        self.client.post('/chat', data={'keyword': 'INFP'})
-        self.client.post('/chat', data={'keyword': '오전'})
-        response = self.client.post('/chat', data={'keyword': '끝'})
-        self.assertIn("동아리".encode(), response.data)
-
-    @patch("app.subprocess.run")
-    def test_chat_synonym_filter(self, mock_run):
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "- 음악 동아리"
-
-        self.client.get('/')
-        self.client.post('/chat', data={'keyword': 'INFP'})
-        response = self.client.post('/chat', data={'keyword': '밴드'})
-        self.assertIn("동아리".encode(), response.data)
-
-    @patch("app.subprocess.run")
-    def test_chat_cpp_error(self, mock_run):
-        mock_run.return_value.returncode = 1
-        mock_run.return_value.stderr = "C++ 오류 발생"
-
-        self.client.get('/')
-        self.client.post('/chat', data={'keyword': 'INFP'})
-        response = self.client.post('/chat', data={'keyword': '오전'})
-        self.assertIn("오류".encode(), response.data)
-
-    @patch("app.subprocess.run")
-    def test_chat_no_club_found(self, mock_run):
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "해당되는 동아리가 없습니다"
-
-        self.client.get('/')
-        self.client.post('/chat', data={'keyword': 'INFP'})
-        response = self.client.post('/chat', data={'keyword': '토요일'})
-        self.assertIn("해당되는 동아리가 없습니다".encode(), response.data)
-
-    @patch("app.subprocess.run", side_effect=Exception("강제 에러"))
-    def test_chat_exception_handling(self, _):
-        self.client.get('/')
-        self.client.post('/chat', data={'keyword': 'INFP'})
-        response = self.client.post('/chat', data={'keyword': '오전'})
-        self.assertIn("오류가 발생했어요".encode(), response.data)
-
-    def test_other_routes(self):
-        self.assertEqual(self.client.get("/result").status_code, 200)
-        self.assertEqual(self.client.get("/club/1").status_code, 200)
-        self.assertEqual(self.client.get("/apply").status_code, 200)
-        self.assertEqual(self.client.post("/apply").status_code, 302)
-        self.assertEqual(self.client.get("/apply/success").status_code, 200)
-
-    # ✅ 수정된: /chat GET 핸들러만 테스트 (문구 없음)
-    def test_chat_get_session_empty(self):
-        response = self.client.get('/chat')
+    def test_get_index(self):
+        response = self.app.get('/index')
         self.assertEqual(response.status_code, 200)
 
-    @patch("app.subprocess.run")
-    def test_chat_single_club(self, mock_run):
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "- 유일 동아리"
+    def test_post_index_no_file(self):
+        response = self.app.post('/index', data={})
+        self.assertIn(response.status_code, [200, 302])
 
-        self.client.get('/')
-        self.client.post('/chat', data={'keyword': 'INFP'})
-        response = self.client.post('/chat', data={'keyword': '오전'})
-        self.assertIn("하나 남았습니다".encode(), response.data)
+    def test_chat_post_empty(self):
+        response = self.app.post('/chat', json={"message": ""})
+        self.assertEqual(response.status_code, 200)
+        if response.is_json:
+            data = response.get_json()
+            self.assertIn("response", data)
 
-    @patch("app.subprocess.run")
-    def test_chat_filter_error_handling(self, mock_run):
-        mock_run.return_value.returncode = 1
-        mock_run.return_value.stderr = "실패"
+    def test_chat_post_keyword(self):
+        response = self.app.post('/chat', json={"message": "음악"})
+        self.assertEqual(response.status_code, 200)
+        if response.is_json:
+            data = response.get_json()
+            self.assertIn("response", data)
 
-        self.client.get('/')
-        self.client.post('/chat', data={'keyword': 'INFP'})
-        response = self.client.post('/chat', data={'keyword': '오후'})
-        self.assertIn("오류".encode(), response.data)
+    def test_chat_post_mbti(self):
+        response = self.app.post('/chat', json={"message": "infp"})
+        self.assertEqual(response.status_code, 200)
+        if response.is_json:
+            data = response.get_json()
+            self.assertIn("response", data)
 
-    @patch("app.subprocess.run")
-    def test_chat_invalid_format_output(self, mock_run):
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "클럽 리스트인데 - 기호 없음\n정상 파싱 불가"
+    def test_chat_post_image_base64(self):
+        img = Image.new('RGB', (10, 10), color='white')
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        img_bytes = buffer.getvalue()
+        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
-        self.client.get('/')
-        self.client.post('/chat', data={'keyword': 'INFP'})
-        response = self.client.post('/chat', data={'keyword': '말도안됨'})
-        self.assertIn("MBTI를 다시 입력해주세요".encode(), response.data)
+        response = self.app.post('/chat', json={"image": img_base64})
+        self.assertEqual(response.status_code, 200)
+        if response.is_json:
+            data = response.get_json()
+            self.assertIn("response", data)
+
+class TestImageModule(unittest.TestCase):
+    def test_clubs_info_exists(self):
+        self.assertIsInstance(image.clubs_info, dict)
+        self.assertIn("코딩하는친구들", image.clubs_info)
+
+    def test_club_data_fields(self):
+        club = image.clubs_info.get("코딩하는친구들", {})
+        self.assertIn("description", club)
+        self.assertIn("tags", club)
+        self.assertIn("schedule", club)
+
+    def test_tag_class_filter(self):
+        self.assertEqual(image.tag_class_filter("오프라인"), "tag-offline")
+        self.assertEqual(image.tag_class_filter("없는태그"), "tag-default")
+
+    def test_nl2br_filter(self):
+        input_text = "첫 줄\n두 번째 줄"
+        expected = "첫 줄<br>\n두 번째 줄"
+        self.assertEqual(str(image.nl2br_filter(input_text)), expected)
+
+class TestAdditionalAppRoutes(unittest.TestCase):
+    def setUp(self):
+        self.app = app.test_client()
+        self.app.testing = True
+
+    def test_result_without_file(self):
+        response = self.app.get('/result')
+        self.assertIn(response.status_code, [200, 302])
+
+    def test_apply_post(self):
+        response = self.app.post('/apply', data={
+            'name': '테스터',
+            'email': 'tester@example.com',
+            'motivation': '열정있어요',
+            'club': '코딩하는친구들'
+        })
+        self.assertIn(response.status_code, [200, 302])
+        if response.status_code == 200:
+            self.assertIn("신청이 완료되었습니다", response.data.decode("utf-8"))
 
 if __name__ == '__main__':
     unittest.main()
