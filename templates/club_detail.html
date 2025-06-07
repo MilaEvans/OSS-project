@@ -19,9 +19,6 @@
       white-space: pre-line;
       color: #3178c6;
     }
-    .tag-badge {
-      margin: 2px;
-    }
   </style>
 </head>
 <body>
@@ -42,7 +39,6 @@
           <p><strong>카테고리:</strong> {{ category }}</p>
           <p><strong>회원 수:</strong> {{ members }}명</p>
           {% if tags %}
-            <p><strong>태그:</strong><br/>
               {% for tag in tags %}
                 <span class="badge bg-primary tag-badge">{{ tag }}</span>
               {% endfor %}
@@ -78,3 +74,4 @@
 <a href="{{ url_for('apply_form') }}">신청하기</a>
 </body>
 </html>
+
