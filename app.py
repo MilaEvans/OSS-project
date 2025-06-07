@@ -206,7 +206,26 @@ def clear():
 
 @app.route("/club/<club_id>")
 def club_detail(club_id):
-    return render_template("club_detail.html", club_id=club_id)
+    print("[DEBUG] club_id =", club_id)
+    print("[DEBUG] keys =", list(clubs_info.keys()))
+    club = clubs_info.get(club_id)
+    if not club:
+        return render_template("club_detail.html",
+                               club_name=club_id,
+                               description="정보가 없습니다.",
+                               introduction="소개 정보가 없습니다.",
+                               schedule=[],
+                               members=0,
+                               category="미정",
+                            )
+    return render_template("club_detail.html",
+                           club_name=club_id,
+                           description=club["description"],
+                           introduction=club["introduction"],
+                           schedule=club.get("schedule", []),
+                           members=club.get("members", 0),
+                           category=club.get("category", "기타"),
+                          )
 
 @app.route("/apply", methods=["GET", "POST"])
 def apply_form():
@@ -321,5 +340,7 @@ def result():
         ocr_result=ocr_result,
         recommended_clubs=recommended_clubs
     )
+
+
 if __name__ == "__main__":
     app.run(debug=True)
