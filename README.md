@@ -25,7 +25,7 @@ pip install g++
 pip install pytesseract
 
 @실행 방법
-** 윈도우 10인 경우, app.py 실행 전에 필요
+- ** 윈도우 10인 경우, app.py 실행 전에 아래의 두 명령어 필요
 - $rm ./mbti_project/MixBot
 - $g++ -std=c++17 ./mbti_project/MixBot.cpp -o ./mbti_project/MixBot
 1. app.py 파일 실행
