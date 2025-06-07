@@ -145,20 +145,12 @@
             <a href="{{ url_for('index') }}"><button style="background-color: #6c757d;" type="button">메인</button></a>
             <a href="{{ url_for('result') }}"><button style="background-color: #6c757d;" type="button">추천 결과</button></a>
             <a href="{{ url_for('club_detail', club_id=1) }}"><button style="background-color: #6c757d;" type="button">동아리 상세</button></a>
-            <a href="{{ url_for('apply_form') }}"><button style="background-color: #6c757d;" type="button">신청 폼</button></a>
-            <a href="{{ url_for('apply_success') }}"><button style="background-color: #6c757d;" type="button">신청 완료</button></a>
         </div>
 
         <div style="text-align: right; margin-bottom: 10px;">
             <a href="{{ url_for('index_page') }}">
                 <button style="background-color: #6c757d;" type="button">이미지 업로드 페이지</button>
             </a>
-        </div>
-
-        <div style="text-align: right; margin-bottom: 10px;">
-            <form action="{{ url_for('chat') }}" method="get">
-                <button style="background-color: #6c757d;" type="submit">다른 기능 페이지</button>
-            </form>
         </div>
 
         <div class="chat-box" id="chatBox">
@@ -198,3 +190,4 @@
 </script>
 </body>
 </html>
+
